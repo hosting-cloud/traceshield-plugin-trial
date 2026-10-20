@@ -1,0 +1,8 @@
+{
+  "name": "traceshield-client",
+  "version": "0.1.0",
+  "description": "Traceshield hosting, managed Postgres and Google sign-in through a browser-authenticated client and discoverable tools.",
+  "author": {
+    "name": "Traceshield"
+  }
+}

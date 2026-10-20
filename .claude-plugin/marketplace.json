@@ -1,0 +1,16 @@
+{
+  "name": "traceshield-client-v1-trial",
+  "owner": {
+    "name": "Traceshield"
+  },
+  "plugins": [
+    {
+      "name": "traceshield-client",
+      "source": "./plugins/traceshield-client",
+      "description": "Connect Traceshield and build, host and manage apps with managed Postgres and Google sign-in."
+    }
+  ],
+  "metadata": {
+    "description": "Isolated Traceshield hosting, Postgres and managed sign-in candidate."
+  }
+}
