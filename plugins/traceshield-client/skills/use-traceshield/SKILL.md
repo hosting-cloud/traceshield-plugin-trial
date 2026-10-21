@@ -17,12 +17,20 @@ steps yourself within the requested scope; give short, plain-language updates.
 The user does not need to learn CLI commands or provide Traceshield database,
 hosting or Google Cloud credentials.
 
+After setup, use the three-line welcome under **Finish clearly**, then stop.
+Keep installer paths, catalog revisions and credential-storage details out of
+that welcome unless the user asks for them.
+
 ## Find and discover
 
 The bundled executable is **`${CLAUDE_SKILL_DIR}/../../bin/traceshield`**.
 Quote that complete path when invoking it; it is not installed on PATH. When
 reading this file directly during setup, resolve its actual installed directory
 and use the corresponding absolute executable path.
+This is a compiled macOS executable, not a script. `--help` describes its local
+commands; `tools list` describes backend capabilities.
+After connection, these CLI operations are usable in this conversation. A
+refreshed native skill listing is not a prerequisite to using that executable.
 
 1. Run the executable with `--dir APP_ROOT status`. Select the actual app root,
    not a guessed parent. If unconnected/expired, run `connect`: the client owns
@@ -71,21 +79,31 @@ is requested. Read the returned integration guide for exact configuration.
 - `project link SLUG` validates account ownership and records a private ignored
   folder mapping. Do not replace a mapping or guess the target from similar names.
 - `env pull` writes dev values to `.env.local`, privately and gitignored;
-  it does not print them. Follow its result and the guide to load this file.
+  it does not print them. It also configures app-local certificate trust for
+  remote Postgres, with full TLS/hostname verification. Follow its result and
+  the guide to load this file.
 - `source upload` sends committed HEAD **and its reachable history**, up to the
   service limit. It does not deploy. Preserve existing Git history/remotes and
   unrelated work; stage only intended files. For a new folder, initialize Git
   when preparing the requested publish, not as part of account connection.
+  Untracked files are not uploaded and do not need to be added, ignored or
+  moved just to publish committed source. Review and commit intended tracked
+  changes first. Run upload separately from local edits and commits so its
+  accepted commit and any error remain clear.
 - Source/env helpers use `--dir APP_ROOT` **before** the subcommand. Never upload
   secrets, force-push, replace origin or change global Git/agent settings.
 - An accepted upload, reserved URL or queued deployment is not a live app. Track
   the returned exact deployment ID/commit and verify the public behavior before
   reporting success. On timeout, check its status instead of starting duplicates.
+  For status, pass the returned `deployment_id`; a matching `project` is also
+  accepted. Repeat only successful queued/building/starting responses. On a
+  nonzero exit or `ok:false`, read the error and stop that polling loop; do not
+  filter away errors with grep or keep retrying invalid input.
 
 Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
-Use the client's structured errors to recover. Never inspect executable strings
-to discover capabilities; catalog, guides and help are the supported interface.
+Use the client's structured errors to recover. Catalog, guides and help are the
+supported capability-discovery interface.
 
 ## Finish clearly
 
