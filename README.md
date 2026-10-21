@@ -24,13 +24,14 @@ needed. Git/native plugin installation preserves the executable permission.
 
 - Terminal: use `claude plugin marketplace add https://github.com/idan-hosting/traceshield-plugin-trial`, then `claude plugin install traceshield-client@traceshield-client-v1-trial --scope user`.
 - Desktop Code: locate its bundled native installer with `find "$HOME/Library/Application Support/Claude/claude-code" -type f -path '*/Contents/MacOS/claude' -print -quit`. Use that quoted executable path for the same marketplace/install commands. This avoids depending on `gh` or a global CLI.
-- The installed plugin directory is reported by the native plugin manager. Version0.1.1 is normally under `~/.claude/plugins/cache/traceshield-client-v1-trial/traceshield-client/0.1.1`.
+- The installed plugin directory is reported by the native plugin manager. Use its reported active version directory; older cached versions can remain after updates.
 - Read `skills/use-traceshield/SKILL.md`; its executable is `bin/traceshield`. This is a Mach-O binary, so displaying it as text does not describe its commands. `--help` and authenticated `tools list` are the supported command/capability references.
 - Run the quoted installed executable with `connect`, then `status`. Connection opens browser approval and stores its credential in macOS Keychain. No MCP menu or global skill/agent-instruction edit is part of this package.
 - Read the installed skill in the current conversation to use the CLI immediately. Fresh conversations discover that skill through the native plugin. Hosting, managed Postgres, deployment diagnostics and configuration are described by authenticated backend tools and focused guides.
 
-Publishing uploads committed source and its reachable Git history to the selected
-project's private hosting repository. Untracked local files are excluded; existing
+Client0.1.4 uploads only the committed app files as a standalone source snapshot
+to the selected project’s private hosting repository, without local Git history.
+Its receipt identifies both the local source commit and the hosted snapshot commit. Untracked local files are excluded; existing
 history and origin are preserved. Account connection itself does not publish an app.
 Development credentials remain private in the selected app; remote database trust
 is scoped to that app with certificate and hostname verification enabled.

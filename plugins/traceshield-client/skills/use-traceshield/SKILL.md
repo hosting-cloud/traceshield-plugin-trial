@@ -85,8 +85,11 @@ is requested. Read the returned integration guide for exact configuration.
   `node --env-file=.env.local`; do not display, grep or partially mask the file.
   It contains multiple credentials, not only a database password. For checks,
   print only the outcome, TLS verification status and nonsecret variable names.
-- `source upload` sends committed HEAD **and its reachable history**, up to the
-  service limit. It does not deploy. Preserve existing Git history/remotes and
+- `source upload` sends only the committed app files as a standalone Git
+  snapshot, up to the service limit. It does not upload local Git history.
+  The receipt’s `source_commit_sha` identifies local HEAD; `source_tree_sha`
+  identifies its files; `commit_sha` is the separate hosted snapshot commit.
+  Deploy that returned `commit_sha`, not local HEAD. It does not deploy. Preserve existing Git history/remotes and
   unrelated work; stage only intended files. For a new folder, initialize Git
   when preparing the requested publish, not as part of account connection.
   Untracked files are not uploaded and do not need to be added, ignored or
