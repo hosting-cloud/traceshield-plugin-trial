@@ -96,7 +96,9 @@ is requested. Read the returned integration guide for exact configuration.
 - Source/env helpers use `--dir APP_ROOT` **before** the subcommand. Never upload
   secrets, force-push, replace origin or change global Git/agent settings.
 - An accepted upload, reserved URL or queued deployment is not a live app. Track
-  the returned exact deployment ID/commit and verify the public behavior before
+  the returned exact deployment ID/commit. Use `deployment wait ID` (client
+  0.1.3+) to wait for live/failed without writing shell polling loops. It stops
+  on errors and never starts a deployment. Verify the public behavior before
   reporting success. On timeout, check its status instead of starting duplicates.
   For status, pass the returned `deployment_id`; a matching `project` is also
   accepted. Repeat only successful queued/building/starting responses. On a
