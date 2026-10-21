@@ -81,7 +81,10 @@ is requested. Read the returned integration guide for exact configuration.
 - `env pull` writes dev values to `.env.local`, privately and gitignored;
   it does not print them. It also configures app-local certificate trust for
   remote Postgres, with full TLS/hostname verification. Follow its result and
-  the guide to load this file.
+  the guide to load this file. Load it directly with the framework or
+  `node --env-file=.env.local`; do not display, grep or partially mask the file.
+  It contains multiple credentials, not only a database password. For checks,
+  print only the outcome, TLS verification status and nonsecret variable names.
 - `source upload` sends committed HEAD **and its reachable history**, up to the
   service limit. It does not deploy. Preserve existing Git history/remotes and
   unrelated work; stage only intended files. For a new folder, initialize Git
