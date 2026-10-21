@@ -1,6 +1,6 @@
 {
   "name": "traceshield-client",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Traceshield hosting and managed Postgres through a bundled compiled macOS client. Use its help, skill and authenticated tool catalog.",
   "author": {
     "name": "Traceshield"

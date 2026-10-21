@@ -89,7 +89,12 @@ is requested. Read the returned integration guide for exact configuration.
   snapshot, up to the service limit. It does not upload local Git history.
   The receipt’s `source_commit_sha` identifies local HEAD; `source_tree_sha`
   identifies its files; `commit_sha` is the separate hosted snapshot commit.
-  Deploy that returned `commit_sha`, not local HEAD. It does not deploy. Preserve existing Git history/remotes and
+  Deploy that returned `commit_sha`, not local HEAD. Client0.1.5+ also saves
+  this receipt in the private project mapping; `status` returns `last_upload`.
+  To verify the current committed files are live, compare the deployment SHA
+  with `last_upload.commit_sha` and local `git rev-parse HEAD^{tree}` with
+  `last_upload.source_tree_sha`. Do not compare hosted and local commit SHAs
+  directly or infer publication just because an upload receipt exists. It does not deploy. Preserve existing Git history/remotes and
   unrelated work; stage only intended files. For a new folder, initialize Git
   when preparing the requested publish, not as part of account connection.
   Untracked files are not uploaded and do not need to be added, ignored or
