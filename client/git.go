@@ -84,16 +84,13 @@ func (c *client) setupGit() (any, error) {
 			return nil, fail("git_configuration", "Git setup is incomplete; no push or deployment was started", "Resolve repository config permissions, then rerun git setup")
 		}
 	}
-	return map[string]any{"project": b.Slug, "remote": "traceshield", "url": remote, "configured": true, "pushed": false, "deployed": false, "source_scope": "A normal Git push transfers the committed files and reachable Git history, not untracked files", "next_action": "Review intended source and history, commit intended changes, then git push traceshield HEAD:refs/heads/main. Deploy the exact pushed HEAD SHA. For non-fast-forward rejection only, push HEAD:refs/heads/traceshield/FULL_SHA to preserve both histories; never force-push."}, nil
+	return map[string]any{"project": b.Slug, "remote": "traceshield", "url": remote, "configured": true, "pushed": false, "deployed": false, "source_scope": "A normal Git push transfers the committed files and reachable Git history, not untracked files", "next_action": "Review intended source and history, commit intended changes, then git push traceshield HEAD:refs/heads/main. Verify the full HEAD SHA against git ls-remote traceshield refs/heads/main (or the alternate ref), then deploy that exact SHA. For non-fast-forward rejection only, push HEAD:refs/heads/traceshield/FULL_SHA to preserve both histories; never force-push."}, nil
 }
 
-func (c *client) gitCredential(operation string) (any, error) {
-	if operation != "get" {
-		return gitCredentialResult{}, nil
-	}
-	input, err := io.ReadAll(io.LimitReader(os.Stdin, 16385))
-	if err != nil || len(input) > 16384 {
-		return nil, fail("git_credential", "Invalid Git credential request", "")
+func (c *client) gitCredential() (any, error) {
+	input, err := io.ReadAll(io.LimitReader(os.Stdin, (1<<20)+1))
+	if err != nil || len(input) > 1<<20 {
+		return nil, fail("git_protocol", "Git credential request could not be read or exceeds1MiB", "Update the plugin if this persists; reconnecting will not repair a protocol error")
 	}
 	fields := map[string]string{}
 	for _, line := range strings.Split(string(input), "\n") {
@@ -101,16 +98,19 @@ func (c *client) gitCredential(operation string) (any, error) {
 			break
 		}
 		key, value, ok := strings.Cut(line, "=")
-		if !ok || strings.ContainsAny(value, "\r\x00") {
-			return nil, fail("git_credential", "Invalid Git credential request", "")
+		if !ok || key == "" || strings.ContainsRune(line, '\x00') || len(line)+1 > 65535 {
+			return nil, fail("git_protocol", "Malformed Git credential request", "Update the plugin if this persists; no login was started")
+		}
+		if !contains([]string{"protocol", "host", "path"}, key) {
+			continue
 		}
 		if _, duplicate := fields[key]; duplicate {
-			return nil, fail("git_credential", "Ambiguous Git credential request", "")
+			return nil, fail("git_protocol", "Git supplied an ambiguous credential destination", "Check the repository credential configuration; no login was started")
 		}
 		fields[key] = value
 	}
 	if fields["protocol"] != "https" || fields["host"] != "github.com" {
-		return nil, fail("git_credential", "Git credential destination is not supported", "")
+		return nil, fail("git_destination", "Git credential destination is not supported", "Run git setup for the linked app; credentials are restricted to its managed GitHub repository")
 	}
 	token, err := c.credential()
 	if err != nil {
@@ -125,8 +125,11 @@ func (c *client) gitCredential(operation string) (any, error) {
 		return nil, err
 	}
 	b, err := c.readBinding()
-	if err != nil || b.Account != me["email"] {
-		return nil, fail("project_binding", "Git credential account does not match this folder", "")
+	if err != nil {
+		return nil, fail("project_binding", "This folder has no valid Traceshield project mapping", "Select the app root and link its project before git setup")
+	}
+	if b.Account != me["email"] {
+		return nil, fail("account_mismatch", "Git credential account does not match this folder", "Connect the original account; the folder mapping was not changed")
 	}
 	r, err := c.request("POST", "/api/agent-tools/project", bytes.NewBufferString(fmt.Sprintf(`{"project":%q}`, b.Slug)), true)
 	if err != nil {
@@ -138,7 +141,7 @@ func (c *client) gitCredential(operation string) (any, error) {
 	}
 	repo, _ := p["repo_full_name"].(string)
 	if repo == "" || fields["path"] != repo+".git" && fields["path"] != repo {
-		return nil, fail("git_credential", "Git credential is restricted to the linked project repository", "")
+		return nil, fail("git_destination", "Git credential is restricted to the linked project repository", "Run git setup for the linked app; do not replace a different remote")
 	}
 	r, err = c.request("GET", "/api/projects/"+b.Slug+"/push", nil, true)
 	if err != nil {

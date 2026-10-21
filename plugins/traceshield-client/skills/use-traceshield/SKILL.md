@@ -18,7 +18,7 @@ The user does not need to learn CLI commands or provide Traceshield database,
 hosting or Google Cloud credentials.
 
 After setup, use the three-line welcome under **Finish clearly**, then stop.
-Keep installer paths, catalog revisions and credential-storage details out of
+Keep installer paths, internal identifiers, catalog revisions and credential-storage details out of
 that welcome unless the user asks for them.
 
 ## Find and discover
@@ -107,8 +107,20 @@ is requested. Read the returned integration guide for exact configuration.
   Never force-push, reset local history or merge unrelated histories to publish.
   This branch is sufficient for the backend to fetch and deploy the exact commit.
   A permission denial is different: stop and report it, without alternate paths.
-- After successful Git push, use the discovered deploy operation with the linked
-  project and exact local HEAD SHA, then wait and verify that SHA is live. A Git
+- Before deploying, confirm the actual app root and run `git setup` to validate
+  the linked project's remote. Obtain the full intended SHA with
+  `git -C APP_ROOT rev-parse HEAD`. Check the remote directly with
+  `git -C APP_ROOT ls-remote traceshield refs/heads/main refs/heads/traceshield/FULL_SHA`,
+  substituting the actual SHA. Require that the delivered ref matches that full
+  SHA. This also verifies a push made by the user in another terminal. Missing
+  local tracking refs, a different terminal panel or its empty history do not
+  establish whether a push landed. New-branch, update and already-up-to-date
+  pushes can all succeed; use remote identity rather than matching output text.
+  If verification fails, distinguish an unavailable remote from a commit absent
+  at the intended ref. Preserve the work and report the blocked step; do not ask
+  the customer to rerun commands or paste terminal output to debug our setup.
+- After verified delivery, use the discovered deploy operation with the linked
+  project and exact full SHA, then wait and verify that SHA is live. A Git
   push alone does not deploy. Git credential expiry does not require GitHub login;
   the helper obtains a fresh project credential. If the Traceshield connection
   expired, run normal `connect`, then `git setup` and retry the requested push.
@@ -132,6 +144,29 @@ Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
+
+## Recover without customer debugging
+
+Read the client's error code and next action. A `git_protocol` error is a client
+compatibility problem, not an expired connection: do not reconnect repeatedly.
+Only `authentication_required` or an explicitly expired/revoked connection needs
+normal `connect`. A `credential_storage` error needs its native Keychain recovery;
+network and project/remote errors need their own reported recovery.
+
+Never run the internal `git credential` helper directly, inspect credential
+values or enable Git HTTP credential tracing to debug a publish. These are not
+supported agent diagnostics. Do not ask the customer to run Git commands to
+repair our integration. If a service/client defect prevents the requested work,
+report the blocked step and error code briefly, preserve the app/project and
+commit, and stop without declaring the app online or trying a denied alternate.
+Prefer ordinary native approval UI when available. Keep normal permission
+controls intact. Keep technical diagnostics out of customer recaps
+unless requested.
+
+When first linking for publication, explain briefly if relevant: Traceshield
+manages a private repository for this app; the existing origin stays intact.
+This is a managed organization repository, not a connection to the customer's
+GitHub account. Do not turn this into a late ownership warning after a failure.
 
 ## Finish clearly
 

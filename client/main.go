@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.2.0"
+const version = "0.2.1"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -80,8 +80,11 @@ func main() {
 	if !errors.As(err, &f) {
 		f = &failure{Code: "local_error", Message: err.Error()}
 	}
-	if contains(os.Args[1:], "credential") {
-		fmt.Fprintln(os.Stderr, "Traceshield Git authentication unavailable. Run the client connect and git setup commands, then retry.")
+	if len(os.Args) >= 4 && os.Args[len(os.Args)-3] == "git" && os.Args[len(os.Args)-2] == "credential" {
+		fmt.Fprintf(os.Stderr, "Traceshield Git [%s]: %s\n", f.Code, f.Message)
+		if f.Next != "" {
+			fmt.Fprintln(os.Stderr, "Next:", f.Next)
+		}
 	} else {
 		emit(map[string]any{"ok": false, "error": f})
 	}
@@ -102,7 +105,7 @@ func run(ctx context.Context, args []string) (any, error) {
 	}
 	args = fs.Args()
 
-	valid := len(args) == 1 && contains([]string{"connect", "status", "logout"}, args[0]) || len(args) == 2 && (args[0] == "tools" && args[1] == "list" || args[0] == "source" && args[1] == "upload" || args[0] == "env" && args[1] == "pull" || args[0] == "git" && args[1] == "setup") || len(args) == 3 && (args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || args[0] == "project" && args[1] == "link" && validSlug.MatchString(args[2]) || args[0] == "deployment" && args[1] == "wait" && validDeployment.MatchString(args[2]) || args[0] == "git" && args[1] == "credential" && contains([]string{"get", "store", "erase"}, args[2]))
+	valid := len(args) == 1 && contains([]string{"connect", "status", "logout"}, args[0]) || len(args) == 2 && (args[0] == "tools" && args[1] == "list" || args[0] == "source" && args[1] == "upload" || args[0] == "env" && args[1] == "pull" || args[0] == "git" && args[1] == "setup") || len(args) == 3 && (args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || args[0] == "project" && args[1] == "link" && validSlug.MatchString(args[2]) || args[0] == "deployment" && args[1] == "wait" && validDeployment.MatchString(args[2]) || args[0] == "git" && args[1] == "credential" && contains([]string{"get", "store", "erase", "capability"}, args[2]))
 	if !valid {
 		return nil, fail("usage", "Unknown command or invalid arguments; use --help", "")
 	}
@@ -119,12 +122,15 @@ func run(ctx context.Context, args []string) (any, error) {
 			return nil, fail("usage", "tools call expects one JSON object on stdin", "")
 		}
 	}
+	if args[0] == "git" && args[1] == "credential" && args[2] != "get" {
+		return gitCredentialResult{}, nil
+	}
 	c, err := newClient(ctx, *dir)
 	if err != nil {
 		return nil, err
 	}
 	if args[0] == "git" && args[1] == "credential" {
-		return c.gitCredential(args[2])
+		return c.gitCredential()
 	}
 	switch args[0] {
 	case "connect":
@@ -148,7 +154,7 @@ func run(ctx context.Context, args []string) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		result := map[string]any{"connected": true, "account": me["email"], "origin": c.origin}
+		result := map[string]any{"connected": true, "account": me["email"], "origin": c.origin, "agent_name": "Claude Code"}
 		if b, e := c.readBinding(); e == nil {
 			if b.Account != me["email"] {
 				result["project_binding"] = "account_mismatch"
@@ -223,7 +229,7 @@ func run(ctx context.Context, args []string) (any, error) {
 	return nil, fail("usage", "Unknown command", "")
 }
 func help() any {
-	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "deployment wait ID", "project link SLUG", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "git setup adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
+	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "deployment wait ID", "project link SLUG", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "git setup adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
 }
 func contains(items []string, value string) bool {
 	for _, item := range items {
@@ -403,7 +409,7 @@ func (c *client) connect() (any, error) {
 		c.token = token
 		me, e := c.request("GET", "/api/me", nil, true)
 		if e == nil {
-			return map[string]any{"connected": true, "reused": true, "account": me["email"]}, nil
+			return map[string]any{"connected": true, "reused": true, "account": me["email"], "agent_name": "Claude Code"}, nil
 		}
 		var f *failure
 		if !errors.As(e, &f) || f.Status != 401 {
@@ -454,7 +460,7 @@ func (c *client) connect() (any, error) {
 			if e = c.save(token); e != nil {
 				return nil, e
 			}
-			return map[string]any{"connected": true, "account": me["email"], "credential_storage": "macOS Keychain", "agent_label": c.label}, nil
+			return map[string]any{"connected": true, "account": me["email"], "credential_storage": "macOS Keychain", "agent_label": c.label, "agent_name": "Claude Code"}, nil
 		}
 	}
 	return nil, fail("authorization_incomplete", "Browser authorization was not completed within10minutes", "connect")
