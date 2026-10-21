@@ -62,7 +62,7 @@ the product lacks databases.
 
 | User needs | What to do |
 |---|---|
-| New or existing app online | Inspect app/root/Git/current integrations → find or create the correct project → `project link SLUG` → deployment guide → commit intended source → `source upload` → discovered deploy operation → exact deployment status → exercise live app. |
+| New or existing app online | Inspect app/root/Git/current integrations → find or create the correct project → `project link SLUG` → deployment guide → commit intended source → `git setup` → normal Git push → discovered deploy operation → exact deployment status → exercise live app. |
 | Data that survives refresh/redeploy | Database guide → use provisioned Postgres from server code → migrations → exercise persistence. Browser storage alone does not provide server durability. |
 | Google sign-in / everyone has their own data | Auth + database guides → managed broker login → authenticated server-side queries scoped by verified user identity → verify signed-out behavior, logout and separation between users. |
 | Local development | `env pull` materializes private dev env → load it using the app framework → develop/migrate against dev Postgres, never prod. |
@@ -85,23 +85,38 @@ is requested. Read the returned integration guide for exact configuration.
   `node --env-file=.env.local`; do not display, grep or partially mask the file.
   It contains multiple credentials, not only a database password. For checks,
   print only the outcome, TLS verification status and nonsecret variable names.
-- `source upload` sends only the committed app files as a standalone Git
-  snapshot, up to the service limit. It does not upload local Git history.
-  The receipt’s `source_commit_sha` identifies local HEAD; `source_tree_sha`
-  identifies its files; `commit_sha` is the separate hosted snapshot commit.
-  Deploy that returned `commit_sha`, not local HEAD. Client0.1.5+ also saves
-  this receipt in the private project mapping; `status` returns `last_upload`.
-  To verify the current committed files are live, compare the deployment SHA
-  with `last_upload.commit_sha` and local `git rev-parse HEAD^{tree}` with
-  `last_upload.source_tree_sha`. Do not compare hosted and local commit SHAs
-  directly or infer publication just because an upload receipt exists. It does not deploy. Preserve existing Git history/remotes and
-  unrelated work; stage only intended files. For a new folder, initialize Git
-  when preparing the requested publish, not as part of account connection.
-  Untracked files are not uploaded and do not need to be added, ignored or
-  moved just to publish committed source. Review and commit intended tracked
-  changes first. Run upload separately from local edits and commits so its
-  accepted commit and any error remain clear.
-- Source/env helpers use `--dir APP_ROOT` **before** the subcommand. Never upload
+- For publication use `git setup` after linking. It adds a separate `traceshield`
+  remote and repository-URL-scoped credential helper inside this Git repository.
+  It preserves `origin`, global settings and other services. Run it before each
+  publish to validate the destination and refresh the bundled helper path after
+  plugin updates. It does not initialize, stage, commit, push or deploy.
+- Preserve an existing Git repository. For a non-Git folder, initialize Git only
+  when the user requests publication, at the intended app root. Set identity
+  locally only if needed. Review changes and commit only intended app files;
+  never blindly stage unrelated work or secrets. Keep untracked drafts local.
+- Deliver code with `git push traceshield HEAD:refs/heads/main`, separately from
+  local edits. This is ordinary Git: the committed files and reachable history
+  are sent to the selected project's private repository. Review history as well
+  as current files for credentials before a first push. If the user needs to
+  exclude existing history, explain that scope and select a clean source copy
+  rather than silently sending it. No credential is printed or embedded in the
+  remote; the bundled helper privately handles short-lived repo-scoped auth.
+- If Git rejects a non-fast-forward push (for example an older snapshot upload
+  or another clone), preserve both histories. Obtain the full local HEAD SHA
+  and push `HEAD:refs/heads/traceshield/FULL_SHA` using that actual SHA in the ref.
+  Never force-push, reset local history or merge unrelated histories to publish.
+  This branch is sufficient for the backend to fetch and deploy the exact commit.
+  A permission denial is different: stop and report it, without alternate paths.
+- After successful Git push, use the discovered deploy operation with the linked
+  project and exact local HEAD SHA, then wait and verify that SHA is live. A Git
+  push alone does not deploy. Git credential expiry does not require GitHub login;
+  the helper obtains a fresh project credential. If the Traceshield connection
+  expired, run normal `connect`, then `git setup` and retry the requested push.
+- `source upload` remains available for older snapshot workflows. It sends only
+  committed app files without history and records a distinct hosted commit in
+  `last_upload`. Do not mix that legacy receipt with Git publishing: Git deploys
+  the actual pushed local SHA. Do not switch transports after a safety denial.
+- Local helpers use `--dir APP_ROOT` **before** the subcommand. Never upload
   secrets, force-push, replace origin or change global Git/agent settings.
 - An accepted upload, reserved URL or queued deployment is not a live app. Track
   the returned exact deployment ID/commit. Use `deployment wait ID` (client

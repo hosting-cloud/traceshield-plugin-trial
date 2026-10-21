@@ -1,0 +1,161 @@
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"net/url"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
+
+type gitCredentialResult struct{ password string }
+
+func (c *client) gitRepository() (*binding, string, error) {
+	b, err := c.verifiedBinding()
+	if err != nil {
+		return nil, "", err
+	}
+	r, err := c.call("project", map[string]any{"project": b.Slug})
+	if err != nil {
+		return nil, "", err
+	}
+	p, ok := r["result"].(map[string]any)
+	if !ok {
+		return nil, "", fail("protocol", "Invalid project response", "")
+	}
+	repo, _ := p["repo_full_name"].(string)
+	parts := strings.Split(repo, "/")
+	if len(parts) != 2 || !regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]{0,38}$`).MatchString(parts[0]) || parts[0] == "local" || parts[1] != b.Slug {
+		return nil, "", fail("git_repository", "A managed GitHub repository is required for Git publishing", "")
+	}
+	return b, "https://github.com/" + repo + ".git", nil
+}
+
+func shellQuote(value string) string {
+	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
+}
+
+func (c *client) setupGit() (any, error) {
+	top, err := c.git("rev-parse", "--show-toplevel")
+	if err != nil {
+		return nil, fail("git_repository", "Prepare a Git repository in the selected app folder first", "Preserve existing Git; initialize only a non-Git app when publishing is requested")
+	}
+	root, err := filepath.EvalSymlinks(strings.TrimSpace(string(top)))
+	if err != nil || root != c.dir {
+		return nil, fail("git_repository", "Select the Git repository root explicitly; no configuration changed", "Use --dir APP_ROOT")
+	}
+	b, remote, err := c.gitRepository()
+	if err != nil {
+		return nil, err
+	}
+	remotes, err := c.git("remote")
+	if err != nil {
+		return nil, err
+	}
+	exists := contains(strings.Fields(string(remotes)), "traceshield")
+	if exists {
+		for _, args := range [][]string{{"remote", "get-url", "--all", "traceshield"}, {"remote", "get-url", "--push", "--all", "traceshield"}} {
+			out, e := c.git(args...)
+			if e != nil || strings.TrimSpace(string(out)) != remote {
+				return nil, fail("git_remote_conflict", "Existing traceshield remote points elsewhere or has multiple destinations; it was not changed", "Review the existing remote before connecting this project")
+			}
+		}
+	}
+	exe, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		return nil, err
+	}
+	helper := "!TRACESHIELD_ORIGIN=" + shellQuote(c.origin) + " " + shellQuote(exe) + " --dir " + shellQuote(c.dir) + " git credential"
+	if !exists {
+		if _, err = c.git("remote", "add", "traceshield", remote); err != nil {
+			return nil, fail("git_configuration", "Could not add the traceshield remote", "Check repository configuration permissions")
+		}
+	}
+	key := "credential." + remote
+	for _, args := range [][]string{{"config", "--local", "--replace-all", key + ".useHttpPath", "true"}, {"config", "--local", "--replace-all", key + ".helper", ""}, {"config", "--local", "--add", key + ".helper", helper}} {
+		if _, err = c.git(args...); err != nil {
+			return nil, fail("git_configuration", "Git setup is incomplete; no push or deployment was started", "Resolve repository config permissions, then rerun git setup")
+		}
+	}
+	return map[string]any{"project": b.Slug, "remote": "traceshield", "url": remote, "configured": true, "pushed": false, "deployed": false, "source_scope": "A normal Git push transfers the committed files and reachable Git history, not untracked files", "next_action": "Review intended source and history, commit intended changes, then git push traceshield HEAD:refs/heads/main. Deploy the exact pushed HEAD SHA. For non-fast-forward rejection only, push HEAD:refs/heads/traceshield/FULL_SHA to preserve both histories; never force-push."}, nil
+}
+
+func (c *client) gitCredential(operation string) (any, error) {
+	if operation != "get" {
+		return gitCredentialResult{}, nil
+	}
+	input, err := io.ReadAll(io.LimitReader(os.Stdin, 16385))
+	if err != nil || len(input) > 16384 {
+		return nil, fail("git_credential", "Invalid Git credential request", "")
+	}
+	fields := map[string]string{}
+	for _, line := range strings.Split(string(input), "\n") {
+		if line == "" {
+			break
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok || strings.ContainsAny(value, "\r\x00") {
+			return nil, fail("git_credential", "Invalid Git credential request", "")
+		}
+		if _, duplicate := fields[key]; duplicate {
+			return nil, fail("git_credential", "Ambiguous Git credential request", "")
+		}
+		fields[key] = value
+	}
+	if fields["protocol"] != "https" || fields["host"] != "github.com" {
+		return nil, fail("git_credential", "Git credential destination is not supported", "")
+	}
+	token, err := c.credential()
+	if err != nil {
+		return nil, err
+	}
+	if token == "" {
+		return nil, fail("authentication_required", "Connect Traceshield before pushing", "connect")
+	}
+	c.token = token
+	me, err := c.request("GET", "/api/me", nil, true)
+	if err != nil {
+		return nil, err
+	}
+	b, err := c.readBinding()
+	if err != nil || b.Account != me["email"] {
+		return nil, fail("project_binding", "Git credential account does not match this folder", "")
+	}
+	r, err := c.request("POST", "/api/agent-tools/project", bytes.NewBufferString(fmt.Sprintf(`{"project":%q}`, b.Slug)), true)
+	if err != nil {
+		return nil, err
+	}
+	p, ok := r["result"].(map[string]any)
+	if !ok || p["id"] != b.ID {
+		return nil, fail("project_binding", "Git project identity changed", "")
+	}
+	repo, _ := p["repo_full_name"].(string)
+	if repo == "" || fields["path"] != repo+".git" && fields["path"] != repo {
+		return nil, fail("git_credential", "Git credential is restricted to the linked project repository", "")
+	}
+	r, err = c.request("GET", "/api/projects/"+b.Slug+"/push", nil, true)
+	if err != nil {
+		return nil, err
+	}
+	command, _ := r["command"].(string)
+	args := strings.Fields(command)
+	if len(args) != 4 || args[0] != "git" || args[1] != "push" || args[3] != "HEAD:main" {
+		return nil, fail("protocol", "Unsupported Git credential response", "")
+	}
+	u, err := url.Parse(args[2])
+	if err != nil || u.Scheme != "https" || u.Host != "github.com" || u.Path != "/"+repo+".git" || u.RawQuery != "" || u.Fragment != "" || u.User == nil || u.User.Username() != "x-access-token" {
+		return nil, fail("protocol", "Unexpected Git credential destination", "")
+	}
+	password, ok := u.User.Password()
+	if !ok || password == "" || strings.ContainsAny(password, "\r\n\x00") {
+		return nil, fail("protocol", "Invalid Git credential response", "")
+	}
+	return gitCredentialResult{password: password}, nil
+}
