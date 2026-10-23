@@ -1,0 +1,32 @@
+{
+  "version": "0.3.1",
+  "source_commit": "a981c4ab236233a01f7f339b621682c17c8ad60a",
+  "toolchain": "go1.27.3 darwin/amd64",
+  "source_behavior_changed_during_rebuild": false,
+  "mac_runtime_version_probe": "0.3.1",
+  "windows_runtime": "NOT_RUN",
+  "mac_signature": "ad-hoc, verified; not notarized",
+  "build_targets": [
+    "darwin/amd64",
+    "darwin/arm64",
+    "windows/amd64"
+  ],
+  "files": {
+    ".claude-plugin/marketplace.json": "d079e697aa6a90dfb15344591c41f3b62a37c6c06761406d7540e50721d275de",
+    "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "plugins/traceshield-client/bin/traceshield.exe": "8fff7fe2affcaf7c0c05c33ad915b3c8fbc8f7da546a55637fa4c9141fd0ac69",
+    "plugins/traceshield-client/bin/traceshield": "edbf5857c64ff3161ce8ae63aad02835d4c23251d25af9de65517e0af89f16a1",
+    "plugins/traceshield-client/.claude-plugin/plugin.json": "20ffaca918446c3787c3ca91cb55c1cc38fd80fd76bf0d83fffd6d3fd2b63377",
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "b935929704c943de5dbffd9c81ed1a8c03dd725b9b7df056fb06055bccd1775d",
+    "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
+    "client/go.mod": "67552f907fcbcbc55923f7ff2e92b6b97eb20a4bc86849233bf767ff4899ec6a",
+    "client/git.go": "3fec819aede23c7858121254c1b545f45dee681f6782032c029181df92ca523a",
+    "client/go.sum": "260cd99a6deffdfd9fac1ace053a8b02b7a0c83eb59b485c5701c5afdc0b4161",
+    "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
+    "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
+    "client/main.go": "b34052607b2620a1dd84e3770f4a16745a0cb071b71a86cea4a1eb44fd4afb21",
+    "README.md": "35c7de44490445cffa1fb9d2f7aecfbc599d309326b2347afc01958e50a0ed75",
+    "THIRD_PARTY_NOTICES.md": "80ed5469d0dfbbca0c503d3625c6b15564a5a6a75270f238f70ab764a791f10d"
+  },
+  "note": "Release artifact identities for unchanged0.3.1 source. Windows cross-built only; native Windows validation pending."
+}

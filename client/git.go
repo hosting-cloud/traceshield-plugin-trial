@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -39,12 +40,15 @@ func shellQuote(value string) string {
 }
 
 func (c *client) setupGit() (any, error) {
+	if _, err := exec.LookPath("git"); err != nil {
+		return nil, fail("git_required", "Git is not available on this session's PATH", "Install standard Git for your operating system and make git available to this coding session, then retry; no separate Git Bash session is required")
+	}
 	top, err := c.git("rev-parse", "--show-toplevel")
 	if err != nil {
 		return nil, fail("git_repository", "Prepare a Git repository in the selected app folder first", "Preserve existing Git; initialize only a non-Git app when publishing is requested")
 	}
 	root, err := filepath.EvalSymlinks(strings.TrimSpace(string(top)))
-	if err != nil || root != c.dir {
+	if err != nil || !sameGitRoot(root, c.dir) {
 		return nil, fail("git_repository", "Select the Git repository root explicitly; no configuration changed", "Use --dir APP_ROOT")
 	}
 	b, remote, err := c.gitRepository()
@@ -72,7 +76,7 @@ func (c *client) setupGit() (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	helper := "!TRACESHIELD_ORIGIN=" + shellQuote(c.origin) + " " + shellQuote(exe) + " --dir " + shellQuote(c.dir) + " git credential"
+	helper := "!TRACESHIELD_ORIGIN=" + shellQuote(c.origin) + " " + shellQuote(gitHelperPath(exe)) + " --dir " + shellQuote(gitHelperPath(c.dir)) + " git credential"
 	if !exists {
 		if _, err = c.git("remote", "add", "traceshield", remote); err != nil {
 			return nil, fail("git_configuration", "Could not add the traceshield remote", "Check repository configuration permissions")

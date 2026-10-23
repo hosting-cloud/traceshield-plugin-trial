@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.2.1"
+const version = "0.3.1"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -239,33 +239,6 @@ func contains(items []string, value string) bool {
 	}
 	return false
 }
-func privateWrite(path string, data []byte) error {
-	if s, e := os.Lstat(path); e == nil && !s.Mode().IsRegular() {
-		return fail("unsafe_path", "Refusing non-regular local state file", "")
-	}
-	f, e := os.CreateTemp(filepath.Dir(path), ".traceshield-write-")
-	if e != nil {
-		return e
-	}
-	name := f.Name()
-	defer os.Remove(name)
-	if e = f.Chmod(0600); e != nil {
-		f.Close()
-		return e
-	}
-	if _, e = f.Write(data); e != nil {
-		f.Close()
-		return e
-	}
-	if e = f.Sync(); e != nil {
-		f.Close()
-		return e
-	}
-	if e = f.Close(); e != nil {
-		return e
-	}
-	return os.Rename(name, path)
-}
 func newClient(ctx context.Context, dir string) (*client, error) {
 	origin := strings.TrimRight(os.Getenv("TRACESHIELD_ORIGIN"), "/")
 	if origin == "" {
@@ -283,7 +256,7 @@ func newClient(ctx context.Context, dir string) (*client, error) {
 	if e != nil {
 		return nil, e
 	}
-	cfg, e := os.UserConfigDir()
+	cfg, e := clientConfigDir()
 	if e != nil {
 		return nil, e
 	}
@@ -313,36 +286,6 @@ func newClient(ctx context.Context, dir string) (*client, error) {
 		return nil, fail("configuration", "Invalid installation state; do not overwrite it automatically", "")
 	}
 	return &client{ctx: ctx, origin: origin, dir: dir, service: "app.traceshield.client." + hex.EncodeToString(sum[:8]) + "." + s.Installation, label: "Traceshield " + s.Installation, http: &http.Client{Timeout: 45 * time.Second, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}}, nil
-}
-func (c *client) credential() (string, error) {
-	if runtime.GOOS != "darwin" {
-		return "", fail("unsupported_platform", "This candidate currently supports macOS Keychain", "")
-	}
-	out, e := exec.CommandContext(c.ctx, "/usr/bin/security", "find-generic-password", "-s", c.service, "-a", "connection", "-w").Output()
-	if e == nil {
-		return strings.TrimSpace(string(out)), nil
-	}
-	var exit *exec.ExitError
-	if errors.As(e, &exit) && exit.ExitCode() == 44 {
-		return "", nil
-	}
-	return "", fail("credential_storage", "macOS Keychain is locked, denied access or unavailable. No new login was started.", "Unlock or approve the native Keychain request, then retry")
-}
-func (c *client) save(token string) error {
-	cmd := exec.CommandContext(c.ctx, "/usr/bin/security", "-i")
-	cmd.Stdin = strings.NewReader(fmt.Sprintf("add-generic-password -U -a connection -s %s -X %s\n", c.service, hex.EncodeToString([]byte(token))))
-	if e := cmd.Run(); e != nil {
-		return fail("credential_storage", "Browser approval succeeded, but the connection could not be saved. Setup is incomplete.", "Resolve the native Keychain request, then run connect")
-	}
-	got, e := c.credential()
-	if e != nil {
-		return e
-	}
-	if got != token {
-		return fail("credential_storage", "Saved connection could not be verified", "connect")
-	}
-	c.token = token
-	return nil
 }
 func (c *client) request(method, path string, body io.Reader, auth bool) (map[string]any, error) {
 	if !strings.HasPrefix(path, "/api/") || strings.Contains(path, "?") && strings.Contains(path, "//") {
@@ -427,11 +370,8 @@ func (c *client) connect() (any, error) {
 	if e != nil || !strings.HasPrefix(link, c.origin+"/agent-login/") || u.RawQuery != "" || !regexp.MustCompile(`^[a-f0-9-]{36}$`).MatchString(id) {
 		return nil, fail("protocol", "Invalid browser authorization response", "")
 	}
-	if runtime.GOOS != "darwin" {
-		return nil, fail("unsupported_platform", "Browser opening is currently supported on macOS", "")
-	}
-	if e = exec.CommandContext(c.ctx, "/usr/bin/open", link).Run(); e != nil {
-		return nil, fail("browser", "Could not open browser approval", "connect")
+	if e = c.openBrowser(link); e != nil {
+		return nil, e
 	}
 	fmt.Fprintln(os.Stderr, "Approve Traceshield in the browser; I'll continue automatically.")
 	deadline := time.Now().Add(10 * time.Minute)
@@ -460,7 +400,7 @@ func (c *client) connect() (any, error) {
 			if e = c.save(token); e != nil {
 				return nil, e
 			}
-			return map[string]any{"connected": true, "account": me["email"], "credential_storage": "macOS Keychain", "agent_label": c.label, "agent_name": "Claude Code"}, nil
+			return map[string]any{"connected": true, "account": me["email"], "credential_storage": credentialStorageName, "agent_label": c.label, "agent_name": "Claude Code"}, nil
 		}
 	}
 	return nil, fail("authorization_incomplete", "Browser authorization was not completed within10minutes", "connect")
@@ -510,13 +450,8 @@ func (c *client) logout() (any, error) {
 		var f *failure
 		revoked = e == nil || errors.As(e, &f) && (f.Status == 401 || f.Status == 404)
 	}
-	cmd := exec.CommandContext(c.ctx, "/usr/bin/security", "delete-generic-password", "-s", c.service, "-a", "connection")
-	e = cmd.Run()
-	if e != nil {
-		var x *exec.ExitError
-		if !errors.As(e, &x) || x.ExitCode() != 44 {
-			return nil, fail("credential_storage", "Could not remove local credential", "")
-		}
+	if e = c.deleteCredential(); e != nil {
+		return nil, e
 	}
 	return map[string]any{"local_credential_removed": true, "remote_access_revoked": revoked}, nil
 }
@@ -877,6 +812,9 @@ func gitEnvironment() []string {
 	var env []string
 	for _, v := range os.Environ() {
 		k, _, _ := strings.Cut(v, "=")
+		if runtime.GOOS == "windows" {
+			k = strings.ToUpper(k)
+		}
 		if !strings.HasPrefix(k, "GIT_") {
 			env = append(env, v)
 		}
