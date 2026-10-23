@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.1"
+const version = "0.3.2"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -105,7 +105,7 @@ func run(ctx context.Context, args []string) (any, error) {
 	}
 	args = fs.Args()
 
-	valid := len(args) == 1 && contains([]string{"connect", "status", "logout"}, args[0]) || len(args) == 2 && (args[0] == "tools" && args[1] == "list" || args[0] == "source" && args[1] == "upload" || args[0] == "env" && args[1] == "pull" || args[0] == "git" && args[1] == "setup") || len(args) == 3 && (args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || args[0] == "project" && args[1] == "link" && validSlug.MatchString(args[2]) || args[0] == "deployment" && args[1] == "wait" && validDeployment.MatchString(args[2]) || args[0] == "git" && args[1] == "credential" && contains([]string{"get", "store", "erase", "capability"}, args[2]))
+	valid := len(args) == 1 && contains([]string{"connect", "status", "logout", "publish"}, args[0]) || len(args) == 2 && (args[0] == "tools" && args[1] == "list" || args[0] == "source" && args[1] == "upload" || args[0] == "env" && args[1] == "pull" || args[0] == "git" && args[1] == "setup") || len(args) == 3 && (args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || args[0] == "project" && args[1] == "link" && validSlug.MatchString(args[2]) || args[0] == "deployment" && args[1] == "wait" && validDeployment.MatchString(args[2]) || args[0] == "git" && args[1] == "credential" && contains([]string{"get", "store", "erase", "capability"}, args[2]))
 	if !valid {
 		return nil, fail("usage", "Unknown command or invalid arguments; use --help", "")
 	}
@@ -115,6 +115,8 @@ func run(ctx context.Context, args []string) (any, error) {
 		if err != nil || len(b) > 1<<20 {
 			return nil, fail("usage", "JSON input exceeds1MiB or could not be read", "")
 		}
+		// Windows PowerShell 5.1 under chcp 65001 prefixes piped stdin with a UTF-8 BOM.
+		b = bytes.TrimPrefix(b, []byte("\xef\xbb\xbf"))
 		if len(bytes.TrimSpace(b)) == 0 {
 			b = []byte("{}")
 		}
@@ -186,31 +188,9 @@ func run(ctx context.Context, args []string) (any, error) {
 	}
 	switch args[0] {
 	case "deployment":
-		waitCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-		defer cancel()
-		c.ctx = waitCtx
-		for {
-			result, err := c.call("deployment_status", map[string]any{"deployment_id": args[2]})
-			if err != nil {
-				return nil, err
-			}
-			deployment, ok := result["result"].(map[string]any)
-			if !ok {
-				return nil, fail("protocol", "Invalid deployment status response", "")
-			}
-			switch deployment["status"] {
-			case "live", "failed":
-				return result, nil
-			case "queued", "building", "starting":
-			default:
-				return nil, fail("protocol", "Unknown deployment status", "")
-			}
-			select {
-			case <-waitCtx.Done():
-				return nil, fail("deployment_pending", "Deployment is still pending or waiting was cancelled; no new deployment was started", "Check deployment_status for the same deployment ID")
-			case <-time.After(3 * time.Second):
-			}
-		}
+		return c.waitDeployment(args[2])
+	case "publish":
+		return c.publish()
 	case "tools":
 		if args[1] == "list" {
 			return c.authed("GET", "/api/agent-tools", nil)
@@ -228,8 +208,36 @@ func run(ctx context.Context, args []string) (any, error) {
 	}
 	return nil, fail("usage", "Unknown command", "")
 }
+func (c *client) waitDeployment(id string) (map[string]any, error) {
+	waitCtx, cancel := context.WithTimeout(c.ctx, 5*time.Minute)
+	defer cancel()
+	defer func(ctx context.Context) { c.ctx = ctx }(c.ctx)
+	c.ctx = waitCtx
+	for {
+		result, err := c.call("deployment_status", map[string]any{"deployment_id": id})
+		if err != nil {
+			return nil, err
+		}
+		deployment, ok := result["result"].(map[string]any)
+		if !ok {
+			return nil, fail("protocol", "Invalid deployment status response", "")
+		}
+		switch deployment["status"] {
+		case "live", "failed":
+			return result, nil
+		case "queued", "building", "starting":
+		default:
+			return nil, fail("protocol", "Unknown deployment status", "")
+		}
+		select {
+		case <-waitCtx.Done():
+			return nil, fail("deployment_pending", "Deployment is still pending or waiting was cancelled; no new deployment was started", "Check deployment_status for the same deployment ID")
+		case <-time.After(3 * time.Second):
+		}
+	}
+}
 func help() any {
-	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "deployment wait ID", "project link SLUG", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "git setup adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
+	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "deployment wait ID", "project link SLUG", "publish", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "publish is the normal way to put committed work online: it pushes committed HEAD directly to the linked app's private Traceshield repository (no remote added, origin and Git config untouched, never forced; a diverged history goes to refs/heads/traceshield/FULL_SHA), verifies the remote SHA, deploys that exact SHA and waits for live or failed. Uncommitted files are not sent. git setup is a manual fallback: it adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
 }
 func contains(items []string, value string) bool {
 	for _, item := range items {

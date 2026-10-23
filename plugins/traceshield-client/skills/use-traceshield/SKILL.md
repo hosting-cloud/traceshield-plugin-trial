@@ -62,13 +62,13 @@ refreshed native skill listing is not a prerequisite to using the executable.
    JSON
    ```
 
-   On native Windows PowerShell, set `$T` to the installed `.exe` path and
-   `$App` to the app root, then pipe JSON to the native executable:
+   On native Windows PowerShell, set `$TraceshieldExe` to the installed `.exe` path and
+   `$TraceshieldApp` to the app root, then pipe JSON to the native executable:
 
    ```powershell
    & {
      $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-     '{}' | & $T --dir $App tools call list_projects
+     '{}' | & $TraceshieldExe --dir $TraceshieldApp tools call list_projects
      if ($LASTEXITCODE -ne 0) { throw 'Traceshield operation failed; read its error.' }
    }
    ```
@@ -92,7 +92,7 @@ the product lacks databases.
 
 | User needs | What to do |
 |---|---|
-| New or existing app online | Inspect app/root/Git/current integrations → find or create the correct project → `project link SLUG` → deployment guide → commit intended source → `git setup` → normal Git push → discovered deploy operation → exact deployment status → exercise live app. |
+| New or existing app online | Inspect app/root/Git/current integrations → find or create the correct project → `project link SLUG` → deployment guide → commit intended source → `publish` → exercise live app. |
 | Data that survives refresh/redeploy | Database guide → use provisioned Postgres from server code → migrations → exercise persistence. Browser storage alone does not provide server durability. |
 | Google sign-in / everyone has their own data | Auth + database guides → managed broker login → authenticated server-side queries scoped by verified user identity → verify signed-out behavior, logout and separation between users. |
 | Local development | `env pull` materializes private dev env → load it using the app framework → develop/migrate against dev Postgres, never prod. |
@@ -115,49 +115,41 @@ is requested. Read the returned integration guide for exact configuration.
   `node --env-file=.env.local`; do not display, grep or partially mask the file.
   It contains multiple credentials, not only a database password. For checks,
   print only the outcome, TLS verification status and nonsecret variable names.
-- For publication use `git setup` after linking. It adds a separate `traceshield`
-  remote and repository-URL-scoped credential helper inside this Git repository.
-  It preserves `origin`, global settings and other services. Run it before each
-  publish to validate the destination and refresh the bundled helper path after
-  plugin updates. It does not initialize, stage, commit, push or deploy.
+- Publish with `publish` after linking and committing. One command pushes the
+  committed HEAD directly to the linked project's private Traceshield repository,
+  verifies the remote has that exact full SHA, deploys it and waits for live or
+  failed. It adds no Git remote and leaves `origin`, `.git/config`, global
+  settings and other services untouched. It never force-pushes: if the history
+  diverged (for example an older snapshot upload or another clone), it keeps
+  both histories by sending `refs/heads/traceshield/FULL_SHA` and deploys that.
+  Its result has `commit_sha`, `deployment_id`, `status`, `live_url` and
+  `uncommitted_files_not_sent`; only committed work is sent. Where a
+  deployment guide describes `git setup` plus a manual push, deploy and status
+  polling, `publish` performs those steps; use `publish` instead.
 - Preserve an existing Git repository. For a non-Git folder, initialize Git only
   when the user requests publication, at the intended app root. Set identity
   locally only if needed. Review changes and commit only intended app files;
   never blindly stage unrelated work or secrets. Keep untracked drafts local.
-- Deliver code with `git push traceshield HEAD:refs/heads/main`, separately from
-  local edits. This is ordinary Git: the committed files and reachable history
-  are sent to the selected project's private repository. Review history as well
-  as current files for credentials before a first push. If the user needs to
-  exclude existing history, explain that scope and select a clean source copy
-  rather than silently sending it. No credential is printed or embedded in the
-  remote; the bundled helper privately handles short-lived repo-scoped auth.
-- If Git rejects a non-fast-forward push (for example an older snapshot upload
-  or another clone), preserve both histories. Obtain the full local HEAD SHA
-  and push `HEAD:refs/heads/traceshield/FULL_SHA` using that actual SHA in the ref.
-  Never force-push, reset local history or merge unrelated histories to publish.
-  This branch is sufficient for the backend to fetch and deploy the exact commit.
-  A permission denial is different: stop and report it, without alternate paths.
-- Before deploying, confirm the actual app root and run `git setup` to validate
-  the linked project's remote. Obtain the full intended SHA with
-  `git -C APP_ROOT rev-parse HEAD`. Check the remote directly with
-  `git -C APP_ROOT ls-remote traceshield refs/heads/main refs/heads/traceshield/FULL_SHA`,
-  substituting the actual SHA. Require that the delivered ref matches that full
-  SHA. This also verifies a push made by the user in another terminal. Missing
-  local tracking refs, a different terminal panel or its empty history do not
-  establish whether a push landed. New-branch, update and already-up-to-date
-  pushes can all succeed; use remote identity rather than matching output text.
-  If verification fails, distinguish an unavailable remote from a commit absent
-  at the intended ref. Preserve the work and report the blocked step; do not ask
-  the customer to rerun commands or paste terminal output to debug our setup.
-- After verified delivery, use the discovered deploy operation with the linked
-  project and exact full SHA, then wait and verify that SHA is live. A Git
-  push alone does not deploy. Git credential expiry does not require GitHub login;
-  the helper obtains a fresh project credential. If the Traceshield connection
-  expired, run normal `connect`, then `git setup` and retry the requested push.
+  This is ordinary Git: the committed files and reachable history are sent.
+  Review history as well as current files for credentials before a first
+  publish. If the user needs to exclude existing history, explain that scope
+  and select a clean source copy rather than silently sending it. No credential
+  is printed or stored in the repository; the bundled client handles
+  short-lived repo-scoped auth itself.
+- `status: live` is the deployment result, not proof of the requested change:
+  open `live_url` and verify the behavior before reporting success. On `failed`,
+  read logs, fix, commit and publish again. On an error, follow its code and
+  next action; a permission denial means stop and report, without alternate paths.
+  Git credential expiry does not require GitHub login. If the Traceshield
+  connection expired, run normal `connect`, then retry `publish`.
+- `git setup` (adds a separate `traceshield` remote and scoped helper for a
+  manual `git push traceshield HEAD:refs/heads/main`, then verify with
+  `git ls-remote` and deploy the exact SHA) is only a fallback for users who
+  explicitly want to push themselves. Prefer `publish`.
 - `source upload` remains available for older snapshot workflows. It sends only
   committed app files without history and records a distinct hosted commit in
-  `last_upload`. Do not mix that legacy receipt with Git publishing: Git deploys
-  the actual pushed local SHA. Do not switch transports after a safety denial.
+  `last_upload`. Do not mix that legacy receipt with Git publishing: `publish`
+  deploys the actual local SHA. Do not switch transports after a safety denial.
 - Local helpers use `--dir APP_ROOT` **before** the subcommand. Never upload
   secrets, force-push, replace origin or change global Git/agent settings.
 - An accepted upload, reserved URL or queued deployment is not a live app. Track
@@ -193,8 +185,9 @@ Prefer ordinary native approval UI when available. Keep normal permission
 controls intact. Keep technical diagnostics out of customer recaps
 unless requested.
 
-When first linking for publication, explain briefly if relevant: Traceshield
-manages a private repository for this app; the existing origin stays intact.
+When first publishing, tell the user once, briefly: committed code goes to a
+private repository Traceshield manages for this app; their own origin and Git
+settings stay untouched.
 This is a managed organization repository, not a connection to the customer's
 GitHub account. Do not turn this into a late ownership warning after a failure.
 

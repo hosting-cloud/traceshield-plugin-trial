@@ -39,19 +39,37 @@ func shellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
 }
 
-func (c *client) setupGit() (any, error) {
+// gitPreflight checks Git, the repository root and the linked managed repository.
+func (c *client) gitPreflight() (*binding, string, error) {
 	if _, err := exec.LookPath("git"); err != nil {
-		return nil, fail("git_required", "Git is not available on this session's PATH", "Install standard Git for your operating system and make git available to this coding session, then retry; no separate Git Bash session is required")
+		return nil, "", fail("git_required", "Git is not available on this session's PATH", "Install standard Git for your operating system and make git available to this coding session, then retry; no separate Git Bash session is required")
 	}
 	top, err := c.git("rev-parse", "--show-toplevel")
 	if err != nil {
-		return nil, fail("git_repository", "Prepare a Git repository in the selected app folder first", "Preserve existing Git; initialize only a non-Git app when publishing is requested")
+		return nil, "", fail("git_repository", "Prepare a Git repository in the selected app folder first", "Preserve existing Git; initialize only a non-Git app when publishing is requested")
 	}
 	root, err := filepath.EvalSymlinks(strings.TrimSpace(string(top)))
 	if err != nil || !sameGitRoot(root, c.dir) {
-		return nil, fail("git_repository", "Select the Git repository root explicitly; no configuration changed", "Use --dir APP_ROOT")
+		return nil, "", fail("git_repository", "Select the Git repository root explicitly; no configuration changed", "Use --dir APP_ROOT")
 	}
-	b, remote, err := c.gitRepository()
+	return c.gitRepository()
+}
+
+// credentialHelper is this executable's repository-scoped Git credential helper.
+func (c *client) credentialHelper() (string, error) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		return "", err
+	}
+	return "!TRACESHIELD_ORIGIN=" + shellQuote(c.origin) + " " + shellQuote(gitHelperPath(exe)) + " --dir " + shellQuote(gitHelperPath(c.dir)) + " git credential", nil
+}
+
+func (c *client) setupGit() (any, error) {
+	b, remote, err := c.gitPreflight()
 	if err != nil {
 		return nil, err
 	}
@@ -68,15 +86,10 @@ func (c *client) setupGit() (any, error) {
 			}
 		}
 	}
-	exe, err := os.Executable()
+	helper, err := c.credentialHelper()
 	if err != nil {
 		return nil, err
 	}
-	exe, err = filepath.EvalSymlinks(exe)
-	if err != nil {
-		return nil, err
-	}
-	helper := "!TRACESHIELD_ORIGIN=" + shellQuote(c.origin) + " " + shellQuote(gitHelperPath(exe)) + " --dir " + shellQuote(gitHelperPath(c.dir)) + " git credential"
 	if !exists {
 		if _, err = c.git("remote", "add", "traceshield", remote); err != nil {
 			return nil, fail("git_configuration", "Could not add the traceshield remote", "Check repository configuration permissions")
@@ -89,6 +102,80 @@ func (c *client) setupGit() (any, error) {
 		}
 	}
 	return map[string]any{"project": b.Slug, "remote": "traceshield", "url": remote, "configured": true, "pushed": false, "deployed": false, "source_scope": "A normal Git push transfers the committed files and reachable Git history, not untracked files", "next_action": "Review intended source and history, commit intended changes, then git push traceshield HEAD:refs/heads/main. Verify the full HEAD SHA against git ls-remote traceshield refs/heads/main (or the alternate ref), then deploy that exact SHA. For non-fast-forward rejection only, push HEAD:refs/heads/traceshield/FULL_SHA to preserve both histories; never force-push."}, nil
+}
+
+// publish pushes committed HEAD straight to the managed repository URL (no remote added,
+// no config written, never forced), verifies the remote SHA, deploys it and waits.
+func (c *client) publish() (any, error) {
+	b, remote, err := c.gitPreflight()
+	if err != nil {
+		return nil, err
+	}
+	out, err := c.git("rev-parse", "--verify", "HEAD^{commit}")
+	if err != nil {
+		return nil, fail("needs_commit", "No commit to publish; nothing was sent", "Commit intended app files, then publish")
+	}
+	head := strings.TrimSpace(string(out))
+	dirty, err := c.git("status", "--porcelain")
+	if err != nil {
+		return nil, err
+	}
+	helper, err := c.credentialHelper()
+	if err != nil {
+		return nil, err
+	}
+	remoteGit := func(args ...string) ([]byte, error) {
+		cmd := exec.CommandContext(c.ctx, "git", append([]string{"-c", "credential.helper=", "-c", "credential.helper=" + helper, "-c", "credential.useHttpPath=true"}, args...)...)
+		cmd.Dir = c.dir
+		cmd.Env = append(gitEnvironment(), "GIT_TERMINAL_PROMPT=0")
+		var stderr bytes.Buffer
+		cmd.Stderr = &stderr
+		out, err := cmd.Output()
+		if err != nil {
+			return out, fmt.Errorf("%w: %s", err, stderr.String())
+		}
+		return out, nil
+	}
+	ref := "refs/heads/main"
+	if _, err = remoteGit("push", remote, "HEAD:"+ref); err != nil {
+		if !strings.Contains(err.Error(), "[rejected]") {
+			return nil, fail("push_failed", "Push to Traceshield failed; nothing was deployed: "+strings.TrimSpace(err.Error()), "Check status and the message above, then retry publish")
+		}
+		// Non-fast-forward: keep both histories on an alternate ref; never force.
+		ref = "refs/heads/traceshield/" + head
+		if _, err = remoteGit("push", remote, "HEAD:"+ref); err != nil {
+			return nil, fail("push_failed", "Push to Traceshield failed; nothing was deployed: "+strings.TrimSpace(err.Error()), "Check status and the message above, then retry publish")
+		}
+	}
+	out, err = remoteGit("ls-remote", remote, ref)
+	if err != nil || len(strings.Fields(string(out))) < 1 || strings.Fields(string(out))[0] != head {
+		return nil, fail("push_unverified", "The pushed commit could not be verified on Traceshield; nothing was deployed", "Retry publish")
+	}
+	r, err := c.call("deploy", map[string]any{"project": b.Slug, "commit_sha": head})
+	if err != nil {
+		return nil, err
+	}
+	d, _ := r["result"].(map[string]any)
+	id, _ := d["deployment_id"].(string)
+	if !validDeployment.MatchString(id) {
+		return nil, fail("protocol", "Invalid deploy response", "")
+	}
+	result := map[string]any{"project": b.Slug, "commit_sha": head, "ref": ref, "deployment_id": id, "uncommitted_files_not_sent": len(strings.Split(strings.TrimRight(string(dirty), "\n"), "\n"))}
+	if len(bytes.TrimSpace(dirty)) == 0 {
+		result["uncommitted_files_not_sent"] = 0
+	}
+	w, err := c.waitDeployment(id)
+	if err != nil {
+		return nil, err
+	}
+	deployment, _ := w["result"].(map[string]any)
+	result["status"], result["live_url"], result["error"] = deployment["status"], deployment["live_url"], deployment["error"]
+	if deployment["status"] == "live" {
+		result["next_action"] = "Open the live URL and verify the requested behavior before reporting success"
+	} else {
+		result["next_action"] = "Read build/runtime logs, fix locally, commit and publish again; any earlier live version may still be serving"
+	}
+	return result, nil
 }
 
 func (c *client) gitCredential() (any, error) {
