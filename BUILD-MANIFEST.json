@@ -17,15 +17,15 @@
     "client/git.go": "3117be0603190ec30ec14a2b3734527c265e4dbeebf381774d9be5125ed11071",
     "client/go.mod": "67552f907fcbcbc55923f7ff2e92b6b97eb20a4bc86849233bf767ff4899ec6a",
     "client/go.sum": "260cd99a6deffdfd9fac1ace053a8b02b7a0c83eb59b485c5701c5afdc0b4161",
-    "client/main.go": "d50e7cce6eb0f8d94f3c5604bd100c89af1e766c5df565497ec08d188cfef647",
+    "client/main.go": "aeab8e369d75df759b5a45ba55f7aae53eb8ac4aa7561c68a5b4e64227bcecd9",
     "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
     "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
     "plugins/traceshield-client/.claude-plugin/plugin.json": "a22b5d9d8581f7c59b8bb48e617673e442022a1392b7fe77d9fa484d88bf7739",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "plugins/traceshield-client/bin/traceshield": "c47b2cd38685b7a2d3ab2656ee4428da57e9df58f3d7f93a61cbcf5bf47f2aad",
-    "plugins/traceshield-client/bin/traceshield.exe": "2d0a1c075eb7b2b1d8c2732b8caf0809d809cee672b97a9549edfbe41425d805",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "01ca93215c73246dda2b3890242d8f68c048acecdfcbc815f4e0d7d94eff776a"
+    "plugins/traceshield-client/bin/traceshield": "11ceec9aca5a7cf3511d103f9f5596df31a6ccefaf003220edc143ccfcc7e7fa",
+    "plugins/traceshield-client/bin/traceshield.exe": "31d12d4271d1cb1081f6f406340d1cb91b583a888dadc9805a0cd03cc5dd2e44",
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "9d2798f0a03cb59dd4b5e15e1f48d4ee6827149e45cd57813ffcad6466455a25"
   },
-  "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation, one prefix-rule approval for the Traceshield binary); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
+  "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation, one prefix-rule approval for the Traceshield binary; tools call also takes nonsecret JSON as its last argument so calls stay plain commands); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
 }

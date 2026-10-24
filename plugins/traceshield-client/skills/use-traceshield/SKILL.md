@@ -56,12 +56,11 @@ or reconnecting repeatedly. Native Windows can use PowerShell.
    schemas. Reuse the catalog in this conversation; refresh for a new capability
    or an unknown-tool/version response. `--help` is safe and has no side effects.
 3. Call the chosen operation with `tools call NAME`, supplying one JSON object
-   on stdin matching its schema. On macOS, use a heredoc for nonsecret input:
+   matching its schema. On macOS, pass nonsecret input as one single-quoted last
+   argument, so it stays one plain command (no heredoc, pipe or redirect):
 
    ```sh
-   "PLUGIN_ROOT/bin/traceshield" --dir APP_ROOT tools call list_projects <<'JSON'
-   {}
-   JSON
+   "PLUGIN_ROOT/bin/traceshield" --dir APP_ROOT tools call list_projects '{}'
    ```
 
    On native Windows PowerShell, set `$TraceshieldExe` to the installed `.exe` path and

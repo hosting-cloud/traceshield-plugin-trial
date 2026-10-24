@@ -105,13 +105,17 @@ func run(ctx context.Context, args []string) (any, error) {
 	}
 	args = fs.Args()
 
-	valid := len(args) == 1 && contains([]string{"connect", "status", "logout", "publish"}, args[0]) || len(args) == 2 && (args[0] == "tools" && args[1] == "list" || args[0] == "source" && args[1] == "upload" || args[0] == "env" && args[1] == "pull" || args[0] == "git" && args[1] == "setup") || len(args) == 3 && (args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || args[0] == "project" && args[1] == "link" && validSlug.MatchString(args[2]) || args[0] == "deployment" && args[1] == "wait" && validDeployment.MatchString(args[2]) || args[0] == "git" && args[1] == "credential" && contains([]string{"get", "store", "erase", "capability"}, args[2]))
+	valid := len(args) == 1 && contains([]string{"connect", "status", "logout", "publish"}, args[0]) || len(args) == 2 && (args[0] == "tools" && args[1] == "list" || args[0] == "source" && args[1] == "upload" || args[0] == "env" && args[1] == "pull" || args[0] == "git" && args[1] == "setup") || len(args) == 4 && args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || len(args) == 3 && (args[0] == "tools" && args[1] == "call" && validTool.MatchString(args[2]) || args[0] == "project" && args[1] == "link" && validSlug.MatchString(args[2]) || args[0] == "deployment" && args[1] == "wait" && validDeployment.MatchString(args[2]) || args[0] == "git" && args[1] == "credential" && contains([]string{"get", "store", "erase", "capability"}, args[2]))
 	if !valid {
 		return nil, fail("usage", "Unknown command or invalid arguments; use --help", "")
 	}
 	var input map[string]any
 	if args[0] == "tools" && args[1] == "call" {
-		b, err := io.ReadAll(io.LimitReader(os.Stdin, 1<<20+1))
+		// Nonsecret JSON may be the last argument, so agents can run one plain command (Codex prefix rules skip heredocs).
+		b, err := []byte(args[len(args)-1]), error(nil)
+		if len(args) == 3 {
+			b, err = io.ReadAll(io.LimitReader(os.Stdin, 1<<20+1))
+		}
 		if err != nil || len(b) > 1<<20 {
 			return nil, fail("usage", "JSON input exceeds1MiB or could not be read", "")
 		}
@@ -121,7 +125,7 @@ func run(ctx context.Context, args []string) (any, error) {
 			b = []byte("{}")
 		}
 		if json.Unmarshal(b, &input) != nil || input == nil {
-			return nil, fail("usage", "tools call expects one JSON object on stdin", "")
+			return nil, fail("usage", "tools call expects one JSON object on stdin or as its last argument", "")
 		}
 	}
 	if args[0] == "git" && args[1] == "credential" && args[2] != "get" {
@@ -237,7 +241,7 @@ func (c *client) waitDeployment(id string) (map[string]any, error) {
 	}
 }
 func help() any {
-	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "deployment wait ID", "project link SLUG", "publish", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "publish is the normal way to put committed work online: it pushes committed HEAD directly to the linked app's private Traceshield repository (no remote added, origin and Git config untouched, never forced; a diverged history goes to refs/heads/traceshield/FULL_SHA), verifies the remote SHA, deploys that exact SHA and waits for live or failed. Uncommitted files are not sent. git setup is a manual fallback: it adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
+	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "tools call NAME 'JSON'", "deployment wait ID", "project link SLUG", "publish", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "publish is the normal way to put committed work online: it pushes committed HEAD directly to the linked app's private Traceshield repository (no remote added, origin and Git config untouched, never forced; a diverged history goes to refs/heads/traceshield/FULL_SHA), verifies the remote SHA, deploys that exact SHA and waits for live or failed. Uncommitted files are not sent. git setup is a manual fallback: it adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
 }
 func contains(items []string, value string) bool {
 	for _, item := range items {
