@@ -167,11 +167,10 @@ is requested. Read the returned integration guide for exact configuration.
 Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
 If Claude's auto mode blocks a Traceshield command in the same conversation
-where this plugin was installed, tell the user plainly: "Claude blocked this
-step because Traceshield was just installed in this chat. Start a new chat
-(Claude Desktop: New chat · terminal: type `/exit`, then run `claude`) and ask
-again; it works there." Do not retry, reroute or suggest permission rules.
-In any other conversation, report the block as above.
+where this plugin was installed, say exactly this, and nothing else about it:
+"Claude blocked this because Traceshield was just installed in this chat.
+**Open a new chat and ask again.**" Do not retry, reroute or suggest permission
+rules. In any other conversation, report the block as above.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
 
@@ -201,12 +200,12 @@ GitHub account. Do not turn this into a late ownership warning after a failure.
 
 ## Finish clearly
 
-After setup has verified a saved connection, say exactly these three lines,
-including the new-chat line:
+After setup has verified a saved connection, say exactly these three lines and
+nothing else:
 
 > You're connected to Traceshield 🎉
-> **Start a new chat to begin** (Claude Desktop: New chat · terminal: type `/exit`, then run `claude`).
-> Then try **“Build me a notes app and put it online”** and I'll give you a link to share.
+> **Now open a new chat to start.**
+> There, describe the app you want or ask to put an existing one online, and you'll get a live link.
 
 Do not repeat the welcome in every conversation. After publishing, give the
 verified live link and a short result. If incomplete, state what remains simply;
