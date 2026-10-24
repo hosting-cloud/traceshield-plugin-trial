@@ -17,7 +17,9 @@ steps yourself within the requested scope; give short, plain-language updates.
 The user does not need to learn CLI commands or provide Traceshield database,
 hosting or Google Cloud credentials.
 
-After setup, use the three-line welcome under **Finish clearly**, then stop.
+Setup (installing, connecting and reading this skill) ends after `status`
+confirms the connection: skip `tools list` until the user asks for app work.
+Then use the three-line welcome under **Finish clearly**, then stop.
 Keep installer paths, internal identifiers, catalog revisions and credential-storage details out of
 that welcome unless the user asks for them.
 
@@ -164,6 +166,11 @@ is requested. Read the returned integration guide for exact configuration.
 
 Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
+If Claude's auto mode blocks a Traceshield command in the same conversation
+where this plugin was installed, tell the user plainly: "Claude blocked this
+step because Traceshield was just installed in this chat. Start a new chat and
+ask again; it works there." Do not retry, reroute or suggest permission rules.
+In any other conversation, report the block as above.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
 
@@ -193,11 +200,12 @@ GitHub account. Do not turn this into a late ownership warning after a failure.
 
 ## Finish clearly
 
-After setup has verified a saved connection and discovered tools, say briefly:
+After setup has verified a saved connection, say exactly these three lines,
+including the new-chat line:
 
 > You're connected to Traceshield 🎉
-> Build something new or put an existing app online. Try **“Build me a notes app and put it online”** or **“Put this app online.”**
-> I'll handle the setup and give you a link to share.
+> **Start a new chat to begin** (Claude Desktop: New chat · terminal: type `/exit`, then run `claude`).
+> Then try **“Build me a notes app and put it online”** and I'll give you a link to share.
 
 Do not repeat the welcome in every conversation. After publishing, give the
 verified live link and a short result. If incomplete, state what remains simply;

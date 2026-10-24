@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "source_commit": "18f80a85b6d8fdef23ff5b3127bd249e87a246d2",
   "toolchain": "go1.27.3 darwin/amd64",
   "mac_runtime_version_probe": "0.3.2",
@@ -21,11 +21,11 @@
     "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
     "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
-    "plugins/traceshield-client/.claude-plugin/plugin.json": "8ddfb7a1d4431619a45369ee3d35c51d693d4bde0615eccc2aa3134e2091c315",
+    "plugins/traceshield-client/.claude-plugin/plugin.json": "494cb9f20ab647ea403697196d7125d31a755a2089de0ea5561d7e2a680c4139",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "plugins/traceshield-client/bin/traceshield": "1d84e76530abc86ca1761acb6c7e9952bf6c60c6a085ec4a2d6295932c83cf3e",
     "plugins/traceshield-client/bin/traceshield.exe": "ca68db311aff3d764c55adcc6d6e2b4ece9742cf8aede596ac693d6cf750fefd",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "edebcf70d6f0551b8ec6aee3b5f340c390e8e21a99b1e64071262f5099f83b28"
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "e88975210fb01278b612bf15b8df78f83176e1a0119c66ad3ac34723cb305ff4"
   },
-  "note": "0.3.2: BOM-tolerant stdin, PowerShell recipe variable names, traceshield publish."
+  "note": "0.3.3 (test branch t54-restart): setup stops after status; welcome asks for a new chat; same-chat auto-mode block fallback. Binaries unchanged from 0.3.2."
 }
