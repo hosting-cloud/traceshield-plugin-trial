@@ -25,7 +25,7 @@
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "plugins/traceshield-client/bin/traceshield": "c47b2cd38685b7a2d3ab2656ee4428da57e9df58f3d7f93a61cbcf5bf47f2aad",
     "plugins/traceshield-client/bin/traceshield.exe": "2d0a1c075eb7b2b1d8c2732b8caf0809d809cee672b97a9549edfbe41425d805",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "f5087559869c1d516e38ab1ab040227f219940d120db3ecdaf099a553b898361"
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "01ca93215c73246dda2b3890242d8f68c048acecdfcbc815f4e0d7d94eff776a"
   },
-  "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
+  "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation, one prefix-rule approval for the Traceshield binary); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
 }
