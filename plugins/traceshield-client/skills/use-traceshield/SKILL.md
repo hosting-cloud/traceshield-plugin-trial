@@ -204,7 +204,7 @@ After setup has verified a saved connection, say exactly these three lines and
 nothing else:
 
 > You're connected to Traceshield 🎉
-> **⚠️ Open a new chat now.**
+> **👉 Open a new chat now so Traceshield can load.**
 > In the new chat, say what to build or which app to put online.
 
 Do not repeat the welcome in every conversation. After publishing, give the
