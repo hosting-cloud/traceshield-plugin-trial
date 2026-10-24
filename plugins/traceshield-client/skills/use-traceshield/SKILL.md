@@ -19,9 +19,10 @@ hosting or Google Cloud credentials.
 
 Setup (installing, connecting and reading this skill) ends after `status`
 confirms the connection: skip `tools list` until the user asks for app work.
-Then use the three-line welcome under **Finish clearly**, then stop.
-Keep installer paths, internal identifiers, catalog revisions and credential-storage details out of
-that welcome unless the user asks for them.
+Your final message in the setup conversation is exactly the three-line welcome
+under **Finish clearly**: no recap of the install, connection or skill before
+or after it, and no statement that this conversation can continue instead.
+Then stop.
 
 ## Find and discover
 
@@ -45,8 +46,6 @@ commands; `tools list` describes backend capabilities. Git itself is needed for
 installation and publishing; our client does not need a separate Bash launcher.
 If Git is missing, report the prerequisite briefly rather than starting login
 or reconnecting repeatedly. Native Windows can use PowerShell.
-After connection these CLI operations are usable in this conversation; a
-refreshed native skill listing is not a prerequisite to using the executable.
 
 1. Run the executable with `--dir APP_ROOT status`. Select the actual app root,
    not a guessed parent. If unconnected/expired, run `connect`: the client owns
