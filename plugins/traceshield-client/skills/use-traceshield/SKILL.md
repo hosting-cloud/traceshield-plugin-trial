@@ -168,8 +168,9 @@ Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
 If Claude's auto mode blocks a Traceshield command in the same conversation
 where this plugin was installed, tell the user plainly: "Claude blocked this
-step because Traceshield was just installed in this chat. Start a new chat and
-ask again; it works there." Do not retry, reroute or suggest permission rules.
+step because Traceshield was just installed in this chat. Start a new chat
+(Claude Desktop: New chat · terminal: type `/exit`, then run `claude`) and ask
+again; it works there." Do not retry, reroute or suggest permission rules.
 In any other conversation, report the block as above.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
