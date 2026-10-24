@@ -17,9 +17,12 @@ steps yourself within the requested scope; give short, plain-language updates.
 The user does not need to learn CLI commands or provide Traceshield database,
 hosting or Google Cloud credentials.
 
-After setup, use the three-line welcome under **Finish clearly**, then stop.
-Keep installer paths, internal identifiers, catalog revisions and credential-storage details out of
-that welcome unless the user asks for them.
+Setup (installing, connecting and reading this skill) ends after `status`
+confirms the connection: skip `tools list` until the user asks for app work.
+Your final message in the setup conversation is exactly the three-line welcome
+under **Finish clearly**: no recap of the install, connection or skill before
+or after it, and no statement that this conversation can continue instead.
+Then stop.
 
 ## Find and discover
 
@@ -43,8 +46,6 @@ commands; `tools list` describes backend capabilities. Git itself is needed for
 installation and publishing; our client does not need a separate Bash launcher.
 If Git is missing, report the prerequisite briefly rather than starting login
 or reconnecting repeatedly. Native Windows can use PowerShell.
-After connection these CLI operations are usable in this conversation; a
-refreshed native skill listing is not a prerequisite to using the executable.
 
 1. Run the executable with `--dir APP_ROOT status`. Select the actual app root,
    not a guessed parent. If unconnected/expired, run `connect`: the client owns
@@ -164,6 +165,11 @@ is requested. Read the returned integration guide for exact configuration.
 
 Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
+If Claude's auto mode blocks a Traceshield command in the same conversation
+where this plugin was installed, say exactly this, and nothing else about it:
+"Claude blocked this because Traceshield was just installed in this chat.
+**Open a new chat and ask again.**" Do not retry, reroute or suggest permission
+rules. In any other conversation, report the block as above.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
 
@@ -193,11 +199,12 @@ GitHub account. Do not turn this into a late ownership warning after a failure.
 
 ## Finish clearly
 
-After setup has verified a saved connection and discovered tools, say briefly:
+After setup has verified a saved connection, say exactly these three lines and
+nothing else:
 
 > You're connected to Traceshield 🎉
-> Build something new or put an existing app online. Try **“Build me a notes app and put it online”** or **“Put this app online.”**
-> I'll handle the setup and give you a link to share.
+> **👉 Open a new chat now so Traceshield can load.**
+> In the new chat, say what to build or which app to put online.
 
 Do not repeat the welcome in every conversation. After publishing, give the
 verified live link and a short result. If incomplete, state what remains simply;
