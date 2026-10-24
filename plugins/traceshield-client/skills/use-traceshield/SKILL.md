@@ -168,9 +168,10 @@ is denied, report the specific incomplete step without trying alternate bypasses
 Codex sandbox: every Traceshield command except `--help` reaches the network,
 and `connect`/`logout` also use the system credential store, so run them with
 escalated permissions (outside the sandbox) and a short justification such as
-"Traceshield needs network access to publish your app", and propose a prefix
-rule of just the quoted executable path so the user can approve Traceshield
-once instead of for every command. Request it directly;
+"Traceshield needs network access to publish your app". On every such
+request, including `connect` and `status`, propose a prefix rule containing
+only the executable path (no subcommand or flags), so the user can approve
+Traceshield once instead of for every command. Request it directly;
 do not first try inside the sandbox. If the user declines, report that step as
 incomplete; do not retry, reroute or suggest changing approval settings.
 Use the client's structured errors to recover. Catalog, guides and help are the
