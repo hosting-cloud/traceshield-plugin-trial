@@ -25,7 +25,7 @@
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "plugins/traceshield-client/bin/traceshield": "1d84e76530abc86ca1761acb6c7e9952bf6c60c6a085ec4a2d6295932c83cf3e",
     "plugins/traceshield-client/bin/traceshield.exe": "ca68db311aff3d764c55adcc6d6e2b4ece9742cf8aede596ac693d6cf750fefd",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "bf99d8c8dd89bdaa06b28b56d130ca2ecbc88af9d1a80fa5c6159421e7f76c15"
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "b7992866881c76350c920b5e4e4ee369d0ff29496f4689fdd1799fcd5c90a322"
   },
   "note": "0.3.3 (test branch t54-restart): setup stops after status; welcome asks for a new chat; same-chat auto-mode block fallback. Binaries unchanged from 0.3.2."
 }

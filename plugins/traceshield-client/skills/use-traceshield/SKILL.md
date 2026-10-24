@@ -204,8 +204,8 @@ After setup has verified a saved connection, say exactly these three lines and
 nothing else:
 
 > You're connected to Traceshield 🎉
-> **⚠️ Setup is done. Open a new chat now to start building.**
-> There, describe the app you want or ask to put an existing one online, and you'll get a live link.
+> **⚠️ Open a new chat now.**
+> In the new chat, say what to build or which app to put online.
 
 Do not repeat the welcome in every conversation. After publishing, give the
 verified live link and a short result. If incomplete, state what remains simply;
