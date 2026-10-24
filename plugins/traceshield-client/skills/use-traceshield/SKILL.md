@@ -31,14 +31,15 @@ or the computer displaying a remote session:
 
 | Execution environment | Bundled executable |
 |---|---|
-| Native macOS | `${CLAUDE_SKILL_DIR}/../../bin/traceshield` |
-| Native Windows x64, including Git Bash | `${CLAUDE_SKILL_DIR}/../../bin/traceshield.exe` |
+| Native macOS | `PLUGIN_ROOT/bin/traceshield` |
+| Native Windows x64, including Git Bash | `PLUGIN_ROOT/bin/traceshield.exe` |
 | Windows ARM64, WSL/Linux or another unsupported environment | Stop before connecting; that environment is not supported yet. |
 
-Resolve its quoted absolute installed path once for this conversation. The Mac
+PLUGIN_ROOT is two folders above this SKILL.md (its `skills/use-traceshield/`
+parent's parent); resolve the quoted absolute path once for this conversation. The Mac
 path stays the same. Do not try both binaries, install a launcher/runtime, or
 compile the client. If the selected binary is absent, update this plugin through
-Claude's native plugin manager and resolve its active directory again; do not
+Codex's plugin manager (`codex plugin`) and resolve its active directory again; do not
 edit cached plugin files. Windows x64 is experimental until native testing.
 
 This is a compiled native executable, not a script. `--help` describes its local
@@ -58,7 +59,7 @@ or reconnecting repeatedly. Native Windows can use PowerShell.
    on stdin matching its schema. On macOS, use a heredoc for nonsecret input:
 
    ```sh
-   "${CLAUDE_SKILL_DIR}/../../bin/traceshield" --dir APP_ROOT tools call list_projects <<'JSON'
+   "PLUGIN_ROOT/bin/traceshield" --dir APP_ROOT tools call list_projects <<'JSON'
    {}
    JSON
    ```
@@ -165,11 +166,12 @@ is requested. Read the returned integration guide for exact configuration.
 
 Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
-If Claude's auto mode blocks a Traceshield command in the same conversation
-where this plugin was installed, say exactly this, and nothing else about it:
-"Claude blocked this because Traceshield was just installed in this chat.
-**Open a new chat and ask again.**" Do not retry, reroute or suggest permission
-rules. In any other conversation, report the block as above.
+Codex sandbox: every Traceshield command except `--help` reaches the network,
+and `connect`/`logout` also use the system credential store, so run them with
+escalated permissions (outside the sandbox) and a short justification such as
+"Traceshield needs network access to publish your app". Request it directly;
+do not first try inside the sandbox. If the user declines, report that step as
+incomplete; do not retry, reroute or suggest changing approval settings.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
 

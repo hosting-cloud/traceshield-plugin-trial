@@ -1,5 +1,5 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.3-codex",
   "source_commit": "18f80a85b6d8fdef23ff5b3127bd249e87a246d2",
   "toolchain": "go1.27.3 darwin/amd64",
   "mac_runtime_version_probe": "0.3.2",
@@ -17,15 +17,15 @@
     "client/git.go": "3117be0603190ec30ec14a2b3734527c265e4dbeebf381774d9be5125ed11071",
     "client/go.mod": "67552f907fcbcbc55923f7ff2e92b6b97eb20a4bc86849233bf767ff4899ec6a",
     "client/go.sum": "260cd99a6deffdfd9fac1ace053a8b02b7a0c83eb59b485c5701c5afdc0b4161",
-    "client/main.go": "c9d7395f1776584719820def961e880c45262bece8deafe310d66f1f36aedc75",
+    "client/main.go": "d50e7cce6eb0f8d94f3c5604bd100c89af1e766c5df565497ec08d188cfef647",
     "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
     "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
-    "plugins/traceshield-client/.claude-plugin/plugin.json": "494cb9f20ab647ea403697196d7125d31a755a2089de0ea5561d7e2a680c4139",
+    "plugins/traceshield-client/.claude-plugin/plugin.json": "a22b5d9d8581f7c59b8bb48e617673e442022a1392b7fe77d9fa484d88bf7739",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "plugins/traceshield-client/bin/traceshield": "1d84e76530abc86ca1761acb6c7e9952bf6c60c6a085ec4a2d6295932c83cf3e",
-    "plugins/traceshield-client/bin/traceshield.exe": "ca68db311aff3d764c55adcc6d6e2b4ece9742cf8aede596ac693d6cf750fefd",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "aedc1cf3401f98ad4293234dbda936c2d455e7e0b05c92abe01d8206025c026c"
+    "plugins/traceshield-client/bin/traceshield": "c47b2cd38685b7a2d3ab2656ee4428da57e9df58f3d7f93a61cbcf5bf47f2aad",
+    "plugins/traceshield-client/bin/traceshield.exe": "2d0a1c075eb7b2b1d8c2732b8caf0809d809cee672b97a9549edfbe41425d805",
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "f5087559869c1d516e38ab1ab040227f219940d120db3ecdaf099a553b898361"
   },
-  "note": "0.3.3: setup stops after status; welcome asks for a new chat; same-chat auto-mode block fallback. Binaries unchanged from 0.3.2."
+  "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
 }

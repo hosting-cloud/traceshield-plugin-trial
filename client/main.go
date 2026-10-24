@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.2"
+const version = "0.3.3-codex"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -156,7 +156,7 @@ func run(ctx context.Context, args []string) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		result := map[string]any{"connected": true, "account": me["email"], "origin": c.origin, "agent_name": "Claude Code"}
+		result := map[string]any{"connected": true, "account": me["email"], "origin": c.origin, "agent_name": agentName()}
 		if b, e := c.readBinding(); e == nil {
 			if b.Account != me["email"] {
 				result["project_binding"] = "account_mismatch"
@@ -247,6 +247,22 @@ func contains(items []string, value string) bool {
 	}
 	return false
 }
+// agentName reports which coding agent runs this client; Codex marks its commands with CODEX_THREAD_ID.
+func agentName() string {
+	if os.Getenv("CODEX_THREAD_ID") != "" {
+		return "Codex"
+	}
+	return "Claude Code"
+}
+
+// agentLabel is the name the portal shows on approval and in connected agents ("Traceshield <id>" displays as Claude Code).
+func agentLabel(installation string) string {
+	if agentName() == "Codex" {
+		return "Codex"
+	}
+	return "Traceshield " + installation
+}
+
 func newClient(ctx context.Context, dir string) (*client, error) {
 	origin := strings.TrimRight(os.Getenv("TRACESHIELD_ORIGIN"), "/")
 	if origin == "" {
@@ -293,7 +309,7 @@ func newClient(ctx context.Context, dir string) (*client, error) {
 	if e != nil || !regexp.MustCompile(`^[a-f0-9]{24}$`).MatchString(s.Installation) {
 		return nil, fail("configuration", "Invalid installation state; do not overwrite it automatically", "")
 	}
-	return &client{ctx: ctx, origin: origin, dir: dir, service: "app.traceshield.client." + hex.EncodeToString(sum[:8]) + "." + s.Installation, label: "Traceshield " + s.Installation, http: &http.Client{Timeout: 45 * time.Second, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}}, nil
+	return &client{ctx: ctx, origin: origin, dir: dir, service: "app.traceshield.client." + hex.EncodeToString(sum[:8]) + "." + s.Installation, label: agentLabel(s.Installation), http: &http.Client{Timeout: 45 * time.Second, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}}, nil
 }
 func (c *client) request(method, path string, body io.Reader, auth bool) (map[string]any, error) {
 	if !strings.HasPrefix(path, "/api/") || strings.Contains(path, "?") && strings.Contains(path, "//") {
@@ -360,7 +376,7 @@ func (c *client) connect() (any, error) {
 		c.token = token
 		me, e := c.request("GET", "/api/me", nil, true)
 		if e == nil {
-			return map[string]any{"connected": true, "reused": true, "account": me["email"], "agent_name": "Claude Code"}, nil
+			return map[string]any{"connected": true, "reused": true, "account": me["email"], "agent_name": agentName()}, nil
 		}
 		var f *failure
 		if !errors.As(e, &f) || f.Status != 401 {
@@ -408,7 +424,7 @@ func (c *client) connect() (any, error) {
 			if e = c.save(token); e != nil {
 				return nil, e
 			}
-			return map[string]any{"connected": true, "account": me["email"], "credential_storage": credentialStorageName, "agent_label": c.label, "agent_name": "Claude Code"}, nil
+			return map[string]any{"connected": true, "account": me["email"], "credential_storage": credentialStorageName, "agent_label": c.label, "agent_name": agentName()}, nil
 		}
 	}
 	return nil, fail("authorization_incomplete", "Browser authorization was not completed within10minutes", "connect")
