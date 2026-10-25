@@ -2,10 +2,13 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -45,7 +48,10 @@ var mcpTools = []mcpTool{
 		func(in map[string]any) []string {
 			return []string{"--dir", str(in, "app_folder"), "project", "link", str(in, "slug")}
 		}},
-	{"publish", "Push the committed HEAD to the linked project's private Traceshield repository, deploy that exact SHA and wait for live or failed.", map[string]any{"app_folder": folderProp}, []string{"app_folder"},
+	{"publish", "Optionally commit the listed files first (initializing Git at app_folder if it has no repository), then push the committed HEAD to the linked project's private Traceshield repository, deploy that exact SHA and wait for live or failed. Only committed work is sent.", map[string]any{
+		"app_folder": folderProp,
+		"files":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "App files to stage and commit, relative to app_folder; never secrets or unrelated work"},
+		"message":    map[string]any{"type": "string", "description": "Commit message, required with files"}}, []string{"app_folder"},
 		func(in map[string]any) []string { return []string{"--dir", str(in, "app_folder"), "publish"} }},
 	{"deployment_wait", "Wait for one deployment to become live or failed.", map[string]any{
 		"app_folder": folderProp, "deployment_id": map[string]any{"type": "string"}}, []string{"deployment_id"},
@@ -133,7 +139,11 @@ func callTool(ctx context.Context, name string, in map[string]any) any {
 	var body any
 	for _, t := range mcpTools {
 		if t.name == name {
-			data, err := run(ctx, t.args(in))
+			var data any
+			err := commitFiles(ctx, name, in)
+			if err == nil {
+				data, err = run(ctx, t.args(in))
+			}
 			if err == nil {
 				body = map[string]any{"ok": true, "data": data}
 			} else {
@@ -151,4 +161,49 @@ func callTool(ctx context.Context, name string, in map[string]any) any {
 	b, _ := json.Marshal(body)
 	ok, _ := body.(map[string]any)["ok"].(bool)
 	return map[string]any{"content": []any{map[string]any{"type": "text", "text": string(b)}}, "isError": !ok}
+}
+
+// commitFiles lets publish commit for agents whose shell sandbox cannot write .git (Codex default mode).
+func commitFiles(ctx context.Context, name string, in map[string]any) error {
+	list, _ := in["files"].([]any)
+	if name != "publish" || len(list) == 0 {
+		return nil
+	}
+	dir, msg := str(in, "app_folder"), str(in, "message")
+	if !filepath.IsAbs(dir) || msg == "" {
+		return fail("usage", "files needs an absolute app_folder and a message", "")
+	}
+	files := []string{}
+	for _, f := range list {
+		if s, ok := f.(string); ok && s != "" && !strings.HasPrefix(s, "-") {
+			files = append(files, s)
+		}
+	}
+	git := func(args ...string) ([]byte, error) {
+		cmd := exec.CommandContext(ctx, "git", args...)
+		cmd.Dir, cmd.Env = dir, gitEnvironment()
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			return out, fail("git_commit", "git "+args[0]+" failed: "+strings.TrimSpace(string(out)), "")
+		}
+		return out, nil
+	}
+	if _, err := git("rev-parse", "--git-dir"); err != nil {
+		if _, err := git("init", "-b", "main"); err != nil {
+			return err
+		}
+	}
+	if _, err := git(append([]string{"add", "--"}, files...)...); err != nil {
+		return err
+	}
+	if _, err := git("diff", "--cached", "--quiet"); err == nil {
+		return nil // nothing new to commit
+	}
+	args := []string{"commit", "-m", msg}
+	if out, _ := git("config", "user.email"); len(bytes.TrimSpace(out)) == 0 {
+		// Local per-commit identity only; the user's Git config stays untouched.
+		args = append([]string{"-c", "user.name=Traceshield app", "-c", "user.email=app@traceshield.app"}, args...)
+	}
+	_, err := git(args...)
+	return err
 }

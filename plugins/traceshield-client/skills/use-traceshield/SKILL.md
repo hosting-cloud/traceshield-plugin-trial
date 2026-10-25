@@ -78,7 +78,7 @@ the product lacks databases.
 | Google sign-in / everyone has their own data | Auth + database guides → managed broker login → authenticated server-side queries scoped by verified user identity → verify signed-out behavior, logout and separation between users. |
 | Local development | `env pull` materializes private dev env → load it using the app framework → develop/migrate against dev Postgres, never prod. |
 | API key or other environment setting | Discovered env operation, explicit dev/prod scope, secret input through stdin → redeploy only when requested/needed for the requested change. |
-| Broken app / URL / rollback | Project/deployment status and logs → debugging guide → fix and verify requested update; rollback restores code, not database history. Later changes must start from the rolled-back code in the user's app folder (for example `git revert` the undone commits there); never publish from a temporary clone or worktree. |
+| Broken app / URL / rollback | Project/deployment status and logs → debugging guide → fix and verify requested update; rollback restores code, not database history. Later changes must start from the rolled-back code in the user's app folder (restore the rolled-back files there, for example with `git show SHA:PATH > PATH`, then publish them with `files`); never publish from a temporary clone or worktree. |
 
 Project creation already provisions separate production/development Postgres and
 managed Google/OIDC credentials. No customer Google Console setup is needed for
@@ -107,6 +107,11 @@ is requested. Read the returned integration guide for exact configuration.
   `uncommitted_files_not_sent`; only committed work is sent. Where a
   deployment guide describes `git setup` plus a manual push, deploy and status
   polling, `publish` performs those steps; use `publish` instead.
+- Codex's sandbox cannot write `.git`, so do not run `git init`, `git add` or
+  `git commit` in the shell: pass the intended app files as `files` (paths
+  relative to `app_folder`) and a `message` to `publish`, which initializes Git
+  if needed, stages only those files, commits and publishes. Read-only Git
+  commands such as `git status` and `git log` work in the shell.
 - Preserve an existing Git repository. For a non-Git folder, initialize Git only
   when the user requests publication, at the intended app root. Set identity
   locally only if needed. Review changes and commit only intended app files;

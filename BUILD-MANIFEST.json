@@ -23,9 +23,9 @@
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
     "plugins/traceshield-client/.claude-plugin/plugin.json": "e09c59d9084a4a8d223466b6c3882953ac28f2975db2ad77abbe691fbb394338",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "plugins/traceshield-client/bin/traceshield": "0206058e1b55178e29cbb179ed9b370272d75f3079ad8a67be710b6996e5b086",
-    "plugins/traceshield-client/bin/traceshield.exe": "137d9cdb7a265127c166d1af668bbcda7c98236e4b592afed1b62b8688db0f68",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "718f6353a7573acb6916ab6e363a3ce4ebe19f96534eb23a53c12052d120c22d"
+    "plugins/traceshield-client/bin/traceshield": "266486976646528e71aa798aaba792919b80c0a37bfaf16600f36556c5b374c8",
+    "plugins/traceshield-client/bin/traceshield.exe": "611a2148664c3cfbce3aa453236ee44239cdf75f15f12603b7da179b6a29a84a",
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "c016dc52dec662b39d710c025f87bf6fe7c14d9a1b058660ed356e04991f6b5d"
   },
   "note": "Codex MCP test branch (not main): plugin bundles a stdio MCP server (traceshield mcp, .mcp.json) so app work runs outside the shell sandbox; the skill uses the MCP tools and keeps the native executable only for the setup chat."
 }
