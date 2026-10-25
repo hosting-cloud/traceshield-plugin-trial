@@ -25,7 +25,7 @@
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "plugins/traceshield-client/bin/traceshield": "266486976646528e71aa798aaba792919b80c0a37bfaf16600f36556c5b374c8",
     "plugins/traceshield-client/bin/traceshield.exe": "611a2148664c3cfbce3aa453236ee44239cdf75f15f12603b7da179b6a29a84a",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "ae50ce45e21eaa1ebad9a2d10eaf96e1e606fb993db802076f7ccc5c2fd1f91b"
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "c3e6ac3aef668d935c3587b8d385cc1fae4ae16312c7d98a2e1a705320f15f6e"
   },
   "note": "Codex MCP test branch (not main): plugin bundles a stdio MCP server (traceshield mcp, .mcp.json) so app work runs outside the shell sandbox; the skill uses the MCP tools and keeps the native executable only for the setup chat."
 }

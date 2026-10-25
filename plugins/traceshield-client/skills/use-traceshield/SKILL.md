@@ -51,8 +51,11 @@ instead of the shell. Command names below map to them: `tools list` →
 Git itself is needed for publishing. If Git is missing, report the prerequisite
 briefly rather than starting login or reconnecting repeatedly.
 
-**Setup chat only.** The chat that installs this plugin does not have the MCP
-tools yet. There, run the bundled native executable for `connect` and `status`:
+**Connecting.** When this chat has the `traceshield` MCP tools (for example
+after the user installed the plugin in a terminal and then started Codex), call
+the `connect` and `status` tools; never run the bundled executable for them.
+Only the chat that installed this plugin lacks the tools. There, run the
+bundled native executable for `connect` and `status`:
 `PLUGIN_ROOT/bin/traceshield` on macOS (`traceshield.exe` on Windows x64, which
 is experimental). PLUGIN_ROOT is two folders above this SKILL.md; resolve the
 quoted absolute path once. Run each command with escalated permissions (it needs
@@ -185,6 +188,12 @@ nothing else:
 > You're connected to Traceshield 🎉
 > **👉 Open a new chat now so Traceshield can load.**
 > In the new chat, say what to build or which app to put online.
+
+If you connected with the MCP `connect` tool, this chat can already use
+Traceshield, so say exactly these two lines instead:
+
+> You're connected to Traceshield 🎉
+> Say what to build or which app to put online.
 
 Do not repeat the welcome in every conversation. After publishing, give the
 verified live link and a short result. If incomplete, state what remains simply;
