@@ -17,15 +17,15 @@
     "client/git.go": "3117be0603190ec30ec14a2b3734527c265e4dbeebf381774d9be5125ed11071",
     "client/go.mod": "67552f907fcbcbc55923f7ff2e92b6b97eb20a4bc86849233bf767ff4899ec6a",
     "client/go.sum": "260cd99a6deffdfd9fac1ace053a8b02b7a0c83eb59b485c5701c5afdc0b4161",
-    "client/main.go": "aeab8e369d75df759b5a45ba55f7aae53eb8ac4aa7561c68a5b4e64227bcecd9",
+    "client/main.go": "24c1560a83fbec57da40f55cc149354e01bcb6799ed897f15fe0fbd90c3291c9",
     "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
     "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
-    "plugins/traceshield-client/.claude-plugin/plugin.json": "a22b5d9d8581f7c59b8bb48e617673e442022a1392b7fe77d9fa484d88bf7739",
+    "plugins/traceshield-client/.claude-plugin/plugin.json": "e09c59d9084a4a8d223466b6c3882953ac28f2975db2ad77abbe691fbb394338",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "plugins/traceshield-client/bin/traceshield": "11ceec9aca5a7cf3511d103f9f5596df31a6ccefaf003220edc143ccfcc7e7fa",
-    "plugins/traceshield-client/bin/traceshield.exe": "31d12d4271d1cb1081f6f406340d1cb91b583a888dadc9805a0cd03cc5dd2e44",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "e589e2d73696fc1249fd4b9d0895e63e1e93c2183d0c310347edbd0d7b5d349e"
+    "plugins/traceshield-client/bin/traceshield": "0206058e1b55178e29cbb179ed9b370272d75f3079ad8a67be710b6996e5b086",
+    "plugins/traceshield-client/bin/traceshield.exe": "137d9cdb7a265127c166d1af668bbcda7c98236e4b592afed1b62b8688db0f68",
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "718f6353a7573acb6916ab6e363a3ce4ebe19f96534eb23a53c12052d120c22d"
   },
-  "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation, one prefix-rule approval for the Traceshield binary; tools call also takes nonsecret JSON as its last argument so calls stay plain commands); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
+  "note": "Codex MCP test branch (not main): plugin bundles a stdio MCP server (traceshield mcp, .mcp.json) so app work runs outside the shell sandbox; the skill uses the MCP tools and keeps the native executable only for the setup chat."
 }

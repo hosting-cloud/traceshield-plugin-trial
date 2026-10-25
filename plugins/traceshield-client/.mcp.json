@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "traceshield": {
+      "command": "./bin/traceshield",
+      "args": ["mcp"],
+      "cwd": "${PLUGIN_ROOT}",
+      "tool_timeout_sec": 900
+    }
+  }
+}

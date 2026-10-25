@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.3-codex"
+const version = "0.3.3-codex-mcp"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -65,6 +65,10 @@ func emit(v any) { _ = json.NewEncoder(os.Stdout).Encode(v) }
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
+	if len(os.Args) == 2 && os.Args[1] == "mcp" {
+		serveMCP(ctx)
+		return
+	}
 	result, err := run(ctx, os.Args[1:])
 	if err == nil {
 		if credential, ok := result.(gitCredentialResult); ok {
@@ -241,7 +245,7 @@ func (c *client) waitDeployment(id string) (map[string]any, error) {
 	}
 }
 func help() any {
-	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "tools call NAME 'JSON'", "deployment wait ID", "project link SLUG", "publish", "git setup", "source upload", "env pull", "logout", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "publish is the normal way to put committed work online: it pushes committed HEAD directly to the linked app's private Traceshield repository (no remote added, origin and Git config untouched, never forced; a diverged history goes to refs/heads/traceshield/FULL_SHA), verifies the remote SHA, deploys that exact SHA and waits for live or failed. Uncommitted files are not sent. git setup is a manual fallback: it adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
+	return map[string]any{"version": version, "usage": "traceshield [--dir APP_FOLDER] COMMAND", "commands": []string{"connect", "status", "tools list", "tools call NAME < input.json", "tools call NAME 'JSON'", "deployment wait ID", "project link SLUG", "publish", "git setup", "source upload", "env pull", "logout", "mcp", "help", "--version"}, "discovery": "tools list supplies current action descriptions and JSON schemas. Call integration_guide for database/auth/deployment/debugging guidance. No need to inspect the binary.", "local_helpers": "publish is the normal way to put committed work online: it pushes committed HEAD directly to the linked app's private Traceshield repository (no remote added, origin and Git config untouched, never forced; a diverged history goes to refs/heads/traceshield/FULL_SHA), verifies the remote SHA, deploys that exact SHA and waits for live or failed. Uncommitted files are not sent. git setup is a manual fallback: it adds the traceshield remote and repository-URL-scoped credential helper without changing origin/global configuration. It does not initialize, stage, commit, push or deploy. Review intended files and reachable history, git push traceshield HEAD:refs/heads/main, verify the full SHA against the intended remote ref with git ls-remote, then deploy that exact SHA. For a non-fast-forward rejection preserve both histories by pushing HEAD:refs/heads/traceshield/FULL_SHA; never force. source upload remains a legacy snapshot-only alternative; do not mix snapshot and Git SHA receipts. env pull writes dev credentials privately to ignored .env.local. deployment wait polls one deployment for up to five minutes.", "help_is_read_only": true}
 }
 func contains(items []string, value string) bool {
 	for _, item := range items {
@@ -251,8 +255,12 @@ func contains(items []string, value string) bool {
 	}
 	return false
 }
+
 // agentName reports which coding agent runs this client; Codex marks its commands with CODEX_THREAD_ID.
 func agentName() string {
+	if mcpAgent != "" {
+		return mcpAgent
+	}
 	if os.Getenv("CODEX_THREAD_ID") != "" {
 		return "Codex"
 	}
