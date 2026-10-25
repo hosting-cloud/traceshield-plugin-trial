@@ -98,7 +98,7 @@ the product lacks databases.
 | Google sign-in / everyone has their own data | Auth + database guides → managed broker login → authenticated server-side queries scoped by verified user identity → verify signed-out behavior, logout and separation between users. |
 | Local development | `env pull` materializes private dev env → load it using the app framework → develop/migrate against dev Postgres, never prod. |
 | API key or other environment setting | Discovered env operation, explicit dev/prod scope, secret input through stdin → redeploy only when requested/needed for the requested change. |
-| Broken app / URL / rollback | Project/deployment status and logs → debugging guide → fix and verify requested update; rollback restores code, not database history. |
+| Broken app / URL / rollback | Project/deployment status and logs → debugging guide → fix and verify requested update; rollback restores code, not database history. Later changes must start from the rolled-back code in the user's app folder (for example `git revert` the undone commits there); never publish from a temporary clone or worktree. |
 
 Project creation already provisions separate production/development Postgres and
 managed Google/OIDC credentials. No customer Google Console setup is needed for

@@ -25,7 +25,7 @@
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "plugins/traceshield-client/bin/traceshield": "11ceec9aca5a7cf3511d103f9f5596df31a6ccefaf003220edc143ccfcc7e7fa",
     "plugins/traceshield-client/bin/traceshield.exe": "31d12d4271d1cb1081f6f406340d1cb91b583a888dadc9805a0cd03cc5dd2e44",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "e5ab6295914ed3c570924164e6947fb560885e798da4707e3aa2e740727b6096"
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "e589e2d73696fc1249fd4b9d0895e63e1e93c2183d0c310347edbd0d7b5d349e"
   },
   "note": "Codex test branch (not main): 0.3.3 skill adapted for Codex (plugin root path, sandbox escalation, one prefix-rule approval for the Traceshield binary; tools call also takes nonsecret JSON as its last argument so calls stay plain commands); client names the agent (Codex via CODEX_THREAD_ID, else Claude Code)."
 }
