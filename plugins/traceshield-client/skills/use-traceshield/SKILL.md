@@ -60,7 +60,7 @@ network and the system credential store) and a short justification, and propose
 a prefix rule containing only the executable path. If the user declines, report
 the step as incomplete; do not retry or reroute. Do not edit cached plugin files
 or compile the client. If the MCP tools are missing in a later chat, ask the
-user to open a new chat or restart Codex; do not switch to the shell for app
+user to open a new chat (`/new`; no restart needed); do not switch to the shell for app
 work.
 
 ## Choose the workflow
