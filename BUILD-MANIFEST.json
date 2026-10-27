@@ -1,5 +1,5 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.4",
   "source_commit": "18f80a85b6d8fdef23ff5b3127bd249e87a246d2",
   "toolchain": "go1.27.3 darwin/amd64",
   "mac_runtime_version_probe": "0.3.2",
@@ -21,11 +21,16 @@
     "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
     "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
-    "plugins/traceshield-client/.claude-plugin/plugin.json": "494cb9f20ab647ea403697196d7125d31a755a2089de0ea5561d7e2a680c4139",
+    "plugins/traceshield-client/.claude-plugin/plugin.json": "35851c86e156a7db4d93cdd8c9c8c3081b55c824704acf16e56f7528bf7214b2",
+    "plugins/traceshield-client/.mcp.json": "eb568a673f36444f730a2c35a42b9ec10f367ab03b05aa673691ea0f00e67570",
+    "plugins/traceshield-client/assets/connected-desktop.md": "94958251bbe25de2b2450f0a71aef1f86d57cbc27016d4b5e1cb5e250923358a",
+    "plugins/traceshield-client/assets/connected.svg": "34101c8411bc6edf2a0775f09c5862b107a831d51619c77ea09cd2658d45ec76",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "plugins/traceshield-client/bin/traceshield": "1d84e76530abc86ca1761acb6c7e9952bf6c60c6a085ec4a2d6295932c83cf3e",
     "plugins/traceshield-client/bin/traceshield.exe": "ca68db311aff3d764c55adcc6d6e2b4ece9742cf8aede596ac693d6cf750fefd",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "aedc1cf3401f98ad4293234dbda936c2d455e7e0b05c92abe01d8206025c026c"
+    "plugins/traceshield-client/hooks/hooks.json": "9734458919b87d49b596112ad4be735b08798a9f900608111c0e79fecb5badf7",
+    "plugins/traceshield-client/hooks/session-start.sh": "b80ba4713c8def6e14fb7740b9ab5e1050e512bbbd8ff5e05a7a22b8d4b62a35",
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "eec421a213866bbcdafd1604e9290cd3ed369a422d8b12222ca91922c9688659"
   },
-  "note": "0.3.3: setup stops after status; welcome asks for a new chat; same-chat auto-mode block fallback. Binaries unchanged from 0.3.2."
+  "note": "0.3.4: chat cards (welcome/live/ready) via traceshield-ui MCP, setup banner, session-start greeting for the first 3 chats. Binaries unchanged from 0.3.2."
 }

@@ -19,7 +19,7 @@ hosting or Google Cloud credentials.
 
 Setup (installing, connecting and reading this skill) ends after `status`
 confirms the connection: skip `tools list` until the user asks for app work.
-Your final message in the setup conversation is exactly the three-line welcome
+Your final message in the setup conversation is exactly the welcome
 under **Finish clearly**: no recap of the install, connection or skill before
 or after it, and no statement that this conversation can continue instead.
 Then stop.
@@ -107,6 +107,8 @@ is requested. Read the returned integration guide for exact configuration.
 
 ## Local files and publication
 
+- After a publish that needs no card (see **Show what happened**), reply in one or two plain lines with the live link,
+  then `Try this prompt next:` and one short follow-up prompt for this app in a code block.
 - `project link SLUG` validates account ownership and records a private ignored
   folder mapping. Do not replace a mapping or guess the target from similar names.
 - `env pull` writes dev values to `.env.local`, privately and gitignored;
@@ -191,21 +193,64 @@ Prefer ordinary native approval UI when available. Keep normal permission
 controls intact. Keep technical diagnostics out of customer recaps
 unless requested.
 
-When first publishing, tell the user once, briefly: committed code goes to a
+When a project is created and first published, tell the user once, briefly: committed code goes to a
 private repository Traceshield manages for this app; their own origin and Git
 settings stay untouched.
 This is a managed organization repository, not a connection to the customer's
 GitHub account. Do not turn this into a late ownership warning after a failure.
 
+
 ## Finish clearly
 
-After setup has verified a saved connection, say exactly these three lines and
-nothing else:
+After setup has verified a saved connection, your final message is exactly
+this and nothing else: one image line, then the three code blocks below it. The image line depends on where you run (`echo "$CLAUDE_CODE_ENTRYPOINT"`):
+- `claude-desktop`: the line in `${CLAUDE_SKILL_DIR}/../../assets/connected-desktop.md`
+  (read it with `cat`; it is long, copy it whole and never shorten it). The
+  desktop app shows a local image inline only from the chat's own folder.
+- anything else (terminals show no images): `✓ Connected to Traceshield. **Open a new chat** so Traceshield loads, then try a prompt below.`
 
-> You're connected to Traceshield 🎉
-> **👉 Open a new chat now so Traceshield can load.**
-> In the new chat, say what to build or which app to put online.
+<the image line>
 
-Do not repeat the welcome in every conversation. After publishing, give the
-verified live link and a short result. If incomplete, state what remains simply;
-do not present an old live version as the new successful deployment.
+```
+Build this app and put it online: <describe your app>
+```
+```
+Add Google sign-in to my app
+```
+```
+Connect a database to my app
+```
+
+Do not repeat this in every conversation. If incomplete, state what remains
+simply; do not present an old live version as the new successful deployment.
+
+## Show what happened
+
+Use the `show_card` tool of the `traceshield-ui` server (part of this plugin)
+at these moments only, at most one card per reply, and follow the instruction
+in its result:
+
+- **welcome:** the user's first message in a conversation is vague or
+  getting-started ("hi", "what can you do", "how does this work"). First call
+  `list_projects`; show the welcome card only if the user has no projects.
+- **live:** the first time an app goes live. Before publishing, note the
+  project's status from `status`/`list_projects`; if it was not `live` before
+  and `publish` returns `live` (and you verified the URL), call `show_card`
+  with kind `live`, the URL, and items for what the app has: `hosting`, `repo`,
+  plus `database` and `signin` when the app uses them.
+- **ready:** something new was actually set up later: the app starts using its
+  database (`database`), Google sign-in was added (`signin`), a key was saved
+  (`secret`), or local development was connected for the first time (`local`).
+  For `database` and `signin`, show it when the publish that puts it live
+  succeeds, even if you built it in an earlier turn and the user only said to
+  publish; pass the app's URL. `items` lists everything the app now has
+  (the new thing first, then e.g. `database`), since the card shows the full set.
+
+Every other successful publish: one line with the live link, plus at most one
+"Try this prompt next:" suggestion in a code block. No card for status, logs, rollback or
+errors; just say what happened plainly.
+Never mention cards to the user, or why you did or did not show one.
+
+`try_next`: 1-3 short prompts specific to this app, written as the user would
+say them. If the tool is unavailable, give the same information in two short
+lines.
