@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.2"
+const version = "0.3.5"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)

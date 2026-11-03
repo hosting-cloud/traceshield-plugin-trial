@@ -19,10 +19,10 @@ hosting or Google Cloud credentials.
 
 Setup (installing, connecting and reading this skill) ends after `status`
 confirms the connection: skip `tools list` until the user asks for app work.
-Your final message in the setup conversation is exactly the welcome
-under **Finish clearly**: no recap of the install, connection or skill before
-or after it, and no statement that this conversation can continue instead.
-Then stop.
+End the setup conversation with the welcome under **Finish clearly**. Keep it
+short: the welcome already says what is ready, so skip a step-by-step recap,
+and don't suggest continuing in this conversation (the plugin loads fully in a
+new chat). Then stop.
 
 ## Find and discover
 
@@ -168,10 +168,11 @@ is requested. Read the returned integration guide for exact configuration.
 Respect local-only requests and normal permission controls. If a required action
 is denied, report the specific incomplete step without trying alternate bypasses.
 If Claude's auto mode blocks a Traceshield command in the same conversation
-where this plugin was installed, say exactly this, and nothing else about it:
-"Claude blocked this because Traceshield was just installed in this chat.
-**Open a new chat and ask again.**" Do not retry, reroute or suggest permission
-rules. In any other conversation, report the block as above.
+where this plugin was installed, tell the user plainly what was blocked, and
+that the plugin loads fully in a new chat: "Claude blocked this because
+Traceshield was just installed in this chat. **Open a new chat and ask
+again.**" Don't retry or try another route around the block, and don't change
+permission rules. In any other conversation, report the block as above.
 Use the client's structured errors to recover. Catalog, guides and help are the
 supported capability-discovery interface.
 
@@ -190,8 +191,8 @@ repair our integration. If a service/client defect prevents the requested work,
 report the blocked step and error code briefly, preserve the app/project and
 commit, and stop without declaring the app online or trying a denied alternate.
 Prefer ordinary native approval UI when available. Keep normal permission
-controls intact. Keep technical diagnostics out of customer recaps
-unless requested.
+controls intact. Write recaps in plain language for
+non-developers; give technical details when the user asks for them.
 
 When a project is created and first published, tell the user once, briefly: committed code goes to a
 private repository Traceshield manages for this app; their own origin and Git
@@ -202,8 +203,9 @@ GitHub account. Do not turn this into a late ownership warning after a failure.
 
 ## Finish clearly
 
-After setup has verified a saved connection, your final message is exactly
-this and nothing else: one image line, then the three code blocks below it. The image line depends on where you run (`echo "$CLAUDE_CODE_ENTRYPOINT"`):
+After setup has verified a saved connection, end with this welcome. Start the
+message with it directly (no intro line like "here is the welcome"): one image
+line, then the three code blocks below it. The image line depends on where you run (`echo "$CLAUDE_CODE_ENTRYPOINT"`):
 - `claude-desktop`: the line in `${CLAUDE_SKILL_DIR}/../../assets/connected-desktop.md`
   (read it with `cat`; it is long, copy it whole and never shorten it). The
   desktop app shows a local image inline only from the chat's own folder.
@@ -246,10 +248,16 @@ in its result:
   publish; pass the app's URL. `items` lists everything the app now has
   (the new thing first, then e.g. `database`), since the card shows the full set.
 
+The first time an app goes live, start your reply with these two lines (bold as shown,
+with the real URL), whether or not a card is shown, so terminal users see it too:
+`**🟢 LIVE: <url>**`
+`**This is your real public app, not a local preview.**`
+
 Every other successful publish: one line with the live link, plus at most one
 "Try this prompt next:" suggestion in a code block. No card for status, logs, rollback or
 errors; just say what happened plainly.
-Never mention cards to the user, or why you did or did not show one.
+Don't narrate card actions (for example "now I'm showing you a card"); the card speaks
+for itself. If the user asks about cards, explain plainly.
 
 `try_next`: 1-3 short prompts specific to this app, written as the user would
 say them. If the tool is unavailable, give the same information in two short
