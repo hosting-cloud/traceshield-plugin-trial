@@ -13,7 +13,7 @@ Claude chat and Cowork can't install it: if you're in one of those, open Claude 
 Send this as a message in a Claude Code chat and approve the browser connection when it opens.
 
 ```text
-Install the Traceshield plugin traceshield-client from https://github.com/hosting-cloud/traceshield-plugin-trial at user scope using Claude's plugin installer: use claude if it's available; in Claude Desktop, use its bundled claude inside ~/Library/Application Support/Claude/claude-code on macOS or under %LOCALAPPDATA%\Claude-Data on Windows. Then run the installed plugin's bundled traceshield connect command to sign me in through the browser and remember the connection, followed by traceshield status to verify it. Read the installed skills/use-traceshield/SKILL.md with a shell command and follow its setup steps. Keep my other settings.
+Install the Traceshield plugin traceshield-client from https://github.com/hosting-cloud/traceshield-plugin-trial at user scope using Claude's plugin installer: use claude if it's available; in Claude Desktop, use its bundled claude inside ~/Library/Application Support/Claude/claude-code on macOS or under %LOCALAPPDATA%\Claude-Data on Windows. Then get the plugin's installPath from `claude plugin list --json` (don't search the disk) and run its bundled traceshield connect command to sign me in through the browser and remember the connection, followed by traceshield status to verify it. Read the installed skills/use-traceshield/SKILL.md with a shell command and follow its setup steps. Keep my other settings.
 ```
 
 Then try **"Build me a notes app and put it online"** or **"Put this app online."**
