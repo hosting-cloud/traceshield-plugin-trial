@@ -27,6 +27,7 @@ func (c *client) gitRepository() (*binding, string, error) {
 	if !ok {
 		return nil, "", fail("protocol", "Invalid project response", "")
 	}
+	c.firstPublish, _ = p["first_publish"].(bool)
 	repo, _ := p["repo_full_name"].(string)
 	parts := strings.Split(repo, "/")
 	if len(parts) != 2 || !regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9-]{0,38}$`).MatchString(parts[0]) || parts[0] == "local" || parts[1] != b.Slug {
@@ -136,6 +137,12 @@ func (c *client) publish() (any, error) {
 		}
 		return out, nil
 	}
+	// First publish on this account: open the Projects page before the push, so the user sees Setting up -> Deploying -> Live. Best effort.
+	watch := ""
+	if c.firstPublish && c.openBrowser(c.origin+"/projects") == nil {
+		watch = c.origin + "/projects"
+		fmt.Fprintln(os.Stderr, "Watch it go live: "+watch)
+	}
 	ref := "refs/heads/main"
 	if _, err = remoteGit("push", remote, "HEAD:"+ref); err != nil {
 		if !strings.Contains(err.Error(), "[rejected]") {
@@ -161,6 +168,9 @@ func (c *client) publish() (any, error) {
 		return nil, fail("protocol", "Invalid deploy response", "")
 	}
 	result := map[string]any{"project": b.Slug, "commit_sha": head, "ref": ref, "deployment_id": id, "uncommitted_files_not_sent": len(strings.Split(strings.TrimRight(string(dirty), "\n"), "\n"))}
+	if watch != "" {
+		result["watch_url"] = watch
+	}
 	if len(bytes.TrimSpace(dirty)) == 0 {
 		result["uncommitted_files_not_sent"] = 0
 	}

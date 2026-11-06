@@ -248,10 +248,13 @@ in its result:
   publish; pass the app's URL. `items` lists everything the app now has
   (the new thing first, then e.g. `database`), since the card shows the full set.
 
-The first time an app goes live, start your reply with these two lines (bold as shown,
+The first time an app goes live, start your reply with these three lines (bold as shown,
 with the real URL), whether or not a card is shown, so terminal users see it too:
 `**🟢 LIVE: <url>**`
 `**This is your real public app, not a local preview.**`
+`**It already has: a database · Google sign-in · hosting**`
+In the third line list only what the app uses, in that order (same as the card's items);
+hosting is always there.
 
 Every other successful publish: one line with the live link, plus at most one
 "Try this prompt next:" suggestion in a code block. No card for status, logs, rollback or

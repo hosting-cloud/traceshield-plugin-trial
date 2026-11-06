@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.5"
+const version = "0.3.6"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -57,6 +57,7 @@ type binding struct {
 type client struct {
 	ctx                         context.Context
 	origin, dir, service, label string
+	firstPublish                bool // the account has never deployed; publish opens the Projects page
 	http                        *http.Client
 	token                       string
 }
