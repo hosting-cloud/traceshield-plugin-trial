@@ -1,9 +1,9 @@
 {
-  "version": "0.3.6",
-  "source_commit": "79ac720 (watch-go-live) merged with main 74deaa7",
+  "version": "0.3.7",
+  "source_commit": "task/T68-go-live-progress (2d37cbd) on main 89ab74a",
   "toolchain": "go1.27.3 darwin/amd64",
-  "mac_runtime_version_probe": "0.3.6",
-  "windows_runtime": "not re-run for 0.3.6 (client change is a best-effort browser open; 0.3.5 PASS)",
+  "mac_runtime_version_probe": "0.3.7",
+  "windows_runtime": "not re-run for 0.3.7 (client changes: stderr progress lines, first-publish hints; 0.3.5 PASS)",
   "mac_signature": "ad-hoc, verified; not notarized",
   "build_targets": [
     "darwin/amd64",
@@ -14,23 +14,24 @@
     ".claude-plugin/marketplace.json": "d079e697aa6a90dfb15344591c41f3b62a37c6c06761406d7540e50721d275de",
     "README.md": "5ec62cf5eecbe8cbedd108ec8efe2ea179c0e81fa40f4b69ee18a091fb459e02",
     "THIRD_PARTY_NOTICES.md": "80ed5469d0dfbbca0c503d3625c6b15564a5a6a75270f238f70ab764a791f10d",
-    "client/git.go": "c4111f22ddd93e7e3227055a30ba08edc08bd8f581dbf0ecb13ebd4b86164107",
+    "client/git.go": "03fdcdfdf6d2c242208cc73b3ff111ad46c43804042b1a7905aeb723845dc228",
     "client/go.mod": "67552f907fcbcbc55923f7ff2e92b6b97eb20a4bc86849233bf767ff4899ec6a",
     "client/go.sum": "260cd99a6deffdfd9fac1ace053a8b02b7a0c83eb59b485c5701c5afdc0b4161",
-    "client/main.go": "9a7649c3dcf69387dcee749d6d6651282103d9ca0291a3d6d7a450938a3baddf",
+    "client/main.go": "a7b769bd828414228e99157aeb710fdb41cab11190ae91299782d1f1582a8e4c",
     "client/platform_darwin.go": "322adc788078e65b7dcaa079f3f5f7e484b8d47f29ffd4f792119d148c4967f0",
     "client/platform_unsupported.go": "6b47cf9541846bf3b13abae66f43f70106a3266e507082857bfe4e270699dfab",
     "client/platform_windows.go": "fde02a35a81f799bcdd0f0ebc0af1070493de590b0a245b7e20009d0bdfc7c8e",
-    "plugins/traceshield-client/.claude-plugin/plugin.json": "e69b4014e9c9c0cde72f2e60ffbc8818fad42b13f0652f61b00c6765a3996de6",
+    "plugins/traceshield-client/.claude-plugin/plugin.json": "6d8cc7f502c957790d7965ecbf7c87329857b9b3dfb3076939b610e6f8ed4f49",
     "plugins/traceshield-client/.mcp.json": "eb568a673f36444f730a2c35a42b9ec10f367ab03b05aa673691ea0f00e67570",
     "plugins/traceshield-client/assets/connected-desktop.md": "94958251bbe25de2b2450f0a71aef1f86d57cbc27016d4b5e1cb5e250923358a",
     "plugins/traceshield-client/assets/connected.svg": "34101c8411bc6edf2a0775f09c5862b107a831d51619c77ea09cd2658d45ec76",
     "plugins/traceshield-client/bin/.gitkeep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "plugins/traceshield-client/bin/traceshield": "e2f682fe877673cc1952365a745d0168380a032f6f94cf05e12e375c3e60a01b",
-    "plugins/traceshield-client/bin/traceshield.exe": "c10c747f015beaf0004b654184298e33a77fc891a9a1f3cf1d5ff13837d5363d",
+    "plugins/traceshield-client/bin/traceshield": "0c613da2fdc4e723c2ed3f1ad497b62cc076871dc4c3238c2288b03539de5ed3",
+    "plugins/traceshield-client/bin/traceshield.exe": "29f35f310159cea39f36a0b055d4623ca2087f3a8ff8a22c4748ccc535a9c2a0",
     "plugins/traceshield-client/hooks/hooks.json": "9734458919b87d49b596112ad4be735b08798a9f900608111c0e79fecb5badf7",
     "plugins/traceshield-client/hooks/session-start.sh": "b80ba4713c8def6e14fb7740b9ab5e1050e512bbbd8ff5e05a7a22b8d4b62a35",
-    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "73c60a0adf67445cc50b8c116665c0893725e842cb464a4ef0aaaec691d07305"
+    "plugins/traceshield-client/skills/use-traceshield/SKILL.md": "47a60abea9164eaa7c20cfe35924700a9bd5edd1ece477a2afc281e7b329ecba",
+    "prompt-variants/hosting-scope.md": "14a70bdc3849afea217378843b87740d0514c8cb872803e23a1125b1232763ab"
   },
-  "note": "0.3.6: first publish opens the Projects page (client, server first_publish flag); LIVE reply adds the 'It already has' line (SKILL); README setup line from T67. Binaries rebuilt: CGO_ENABLED=0 go build -trimpath for darwin/amd64, darwin/arm64 (lipo universal, ad-hoc codesign) and windows/amd64."
+  "note": "0.3.7: go-live progress. Client prints setup/build/live progress lines and first-publish reply hints; Desktop progress card (server); SKILL short first-live reply. Binaries rebuilt: CGO_ENABLED=0 go build -trimpath for darwin/amd64, darwin/arm64 (lipo universal, ad-hoc codesign) and windows/amd64."
 }

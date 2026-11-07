@@ -143,6 +143,10 @@ func (c *client) publish() (any, error) {
 		watch = c.origin + "/projects"
 		fmt.Fprintln(os.Stderr, "Watch it go live: "+watch)
 	}
+	if c.firstPublish {
+		say("✓ Database · created", "✓ Google sign-in · ready", "✓ Private repo · saved")
+	}
+	say("◐ Uploading your code…")
 	ref := "refs/heads/main"
 	if _, err = remoteGit("push", remote, "HEAD:"+ref); err != nil {
 		if !strings.Contains(err.Error(), "[rejected]") {
@@ -182,6 +186,11 @@ func (c *client) publish() (any, error) {
 	result["status"], result["live_url"], result["error"] = deployment["status"], deployment["live_url"], deployment["error"]
 	if deployment["status"] == "live" {
 		result["next_action"] = "Open the live URL and verify the requested behavior before reporting success"
+		if c.firstPublish && os.Getenv("CLAUDE_CODE_ENTRYPOINT") == "claude-desktop" {
+			result["next_action"] = result["next_action"].(string) + `. Then reply with only the first two bold LIVE lines and at most 2 short sentences in total (what you checked; the private-repository note): the card already shows what the app has and what to try next, so skip the "It already has" line, prompt suggestions and test-data cleanup`
+		} else if c.firstPublish {
+			result["next_action"] = result["next_action"].(string) + `. Then reply with the bold LIVE lines, the live card's prompts, and at most 2 short sentences in total (what you checked; the private-repository note); skip test-data cleanup and tips`
+		}
 	} else {
 		result["next_action"] = "Read build/runtime logs, fix locally, commit and publish again; any earlier live version may still be serving"
 	}

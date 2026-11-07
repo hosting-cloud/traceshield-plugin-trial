@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.6"
+const version = "0.3.7"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -178,6 +178,10 @@ func run(ctx context.Context, args []string) (any, error) {
 				b.URL, _ = p["live_url"].(string)
 				result["project"] = b
 				result["project_status"] = p["status"]
+				result["first_publish"], result["watch"] = p["first_publish"], p["watch"]
+				if n := progressNext(p["watch"]); n != "" {
+					result["next"] = n
+				}
 			}
 		} else if !os.IsNotExist(e) {
 			return nil, e
@@ -197,7 +201,16 @@ func run(ctx context.Context, args []string) (any, error) {
 			return c.authed("GET", "/api/agent-tools", nil)
 		}
 
-		return c.call(args[2], input)
+		if args[2] != "create_project" {
+			return c.call(args[2], input)
+		}
+		// Real progress the terminal shows while the server creates the app's resources.
+		say("◐ Setting up your database, Google sign-in and private repo…")
+		r, err := c.call(args[2], input)
+		if err == nil {
+			say("✓ Database ready (a live one, plus one for your computer)", "✓ Google sign-in ready", "✓ Private repo ready")
+		}
+		return r, err
 	case "project":
 		return c.link(args[2])
 	case "git":
@@ -209,11 +222,22 @@ func run(ctx context.Context, args []string) (any, error) {
 	}
 	return nil, fail("usage", "Unknown command", "")
 }
+
+// say prints progress lines on stderr; Claude Code shows a running command's latest output.
+func say(lines ...string) {
+	for _, l := range lines {
+		fmt.Fprintln(os.Stderr, l)
+	}
+}
+
+var stepLine = map[string]string{"queued": "◐ Building your app…", "building": "◐ Building your app…", "starting": "✓ Built\n◐ Putting it online…"}
+
 func (c *client) waitDeployment(id string) (map[string]any, error) {
 	waitCtx, cancel := context.WithTimeout(c.ctx, 5*time.Minute)
 	defer cancel()
 	defer func(ctx context.Context) { c.ctx = ctx }(c.ctx)
 	c.ctx = waitCtx
+	shown := ""
 	for {
 		result, err := c.call("deployment_status", map[string]any{"deployment_id": id})
 		if err != nil {
@@ -223,8 +247,19 @@ func (c *client) waitDeployment(id string) (map[string]any, error) {
 		if !ok {
 			return nil, fail("protocol", "Invalid deployment status response", "")
 		}
+		if s, _ := deployment["status"].(string); stepLine[s] != "" && stepLine[s] != shown {
+			shown = stepLine[s]
+			say(shown)
+		}
 		switch deployment["status"] {
-		case "live", "failed":
+		case "live":
+			if !strings.Contains(shown, "Built") {
+				say("✓ Built")
+			}
+			say(fmt.Sprintf("✓ Live: %v", deployment["live_url"]))
+			return result, nil
+		case "failed":
+			say("✗ Not live yet: the deploy failed")
 			return result, nil
 		case "queued", "building", "starting":
 		default:
@@ -507,7 +542,19 @@ func (c *client) link(slug string) (any, error) {
 	if e = privateWrite(filepath.Join(c.dir, ".traceshield-project.json"), data); e != nil {
 		return nil, e
 	}
-	return b, nil
+	out := map[string]any{"version": b.Version, "origin": b.Origin, "account": b.Account, "project_id": b.ID, "slug": b.Slug, "live_url": b.URL, "first_publish": p["first_publish"], "watch": p["watch"]}
+	if n := progressNext(p["watch"]); n != "" {
+		out["next"] = n
+	}
+	return out, nil
+}
+
+// progressNext reminds Claude Desktop to show the live progress card right before the first publish.
+func progressNext(watch any) string {
+	if w, _ := watch.(string); w == "" || os.Getenv("CLAUDE_CODE_ENTRYPOINT") != "claude-desktop" {
+		return ""
+	}
+	return "Right before you run publish, call the traceshield-ui show_card tool with kind progress, this watch, and the url, items and try_next you'd give live. It turns into the live card by itself, so skip live afterwards."
 }
 func (c *client) verifiedBinding() (*binding, error) {
 	b, e := c.readBinding()
