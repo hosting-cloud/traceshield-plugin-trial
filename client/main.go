@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.7"
+const version = "0.3.8"
 const maxResponse = 4 << 20
 
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
@@ -230,7 +230,7 @@ func say(lines ...string) {
 	}
 }
 
-var stepLine = map[string]string{"queued": "◐ Building your app…", "building": "◐ Building your app…", "starting": "✓ Built\n◐ Putting it online…"}
+var stepLine = map[string]string{"queued": "◐ Waiting for a build slot…", "building": "◐ Building…", "starting": "◐ Starting…"}
 
 func (c *client) waitDeployment(id string) (map[string]any, error) {
 	waitCtx, cancel := context.WithTimeout(c.ctx, 5*time.Minute)
@@ -253,10 +253,7 @@ func (c *client) waitDeployment(id string) (map[string]any, error) {
 		}
 		switch deployment["status"] {
 		case "live":
-			if !strings.Contains(shown, "Built") {
-				say("✓ Built")
-			}
-			say(fmt.Sprintf("✓ Live: %v", deployment["live_url"]))
+			say(fmt.Sprintf("✓ Online, with HTTPS: %v", deployment["live_url"]))
 			return result, nil
 		case "failed":
 			say("✗ Not live yet: the deploy failed")

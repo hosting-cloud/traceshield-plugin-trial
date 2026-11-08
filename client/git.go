@@ -146,7 +146,7 @@ func (c *client) publish() (any, error) {
 	if c.firstPublish {
 		say("✓ Database · created", "✓ Google sign-in · ready", "✓ Private repo · saved")
 	}
-	say("◐ Uploading your code…")
+	say("◐ Putting your app online: uploading your code…")
 	ref := "refs/heads/main"
 	if _, err = remoteGit("push", remote, "HEAD:"+ref); err != nil {
 		if !strings.Contains(err.Error(), "[rejected]") {
