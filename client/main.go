@@ -23,9 +23,10 @@ import (
 	"time"
 )
 
-const version = "0.3.8"
+const version = "0.3.9"
 const maxResponse = 4 << 20
 
+var validSurface = regexp.MustCompile(`^[a-z0-9._-]{1,32}$`)
 var validSlug = regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)
 var validDeployment = regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
 var validTool = regexp.MustCompile(`^[a-z][a-z0-9_]{0,63}$`)
@@ -337,7 +338,7 @@ func (c *client) request(method, path string, body io.Reader, auth bool) (map[st
 		return nil, e
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "traceshield/"+version)
+	req.Header.Set("User-Agent", "traceshield/"+version+" ("+surface()+")")
 	if strings.HasSuffix(path, "/source") {
 		req.Header.Set("Content-Type", "application/octet-stream")
 	}
@@ -882,4 +883,11 @@ func dotenvValue(value string) (string, error) {
 		}
 	}
 	return "", fail("environment_encoding", "A dev value cannot be represented safely for both Node and Next.js; no credentials were written", "Use an explicit application env loader for this value")
+}
+
+func surface() string {
+	if s := os.Getenv("CLAUDE_CODE_ENTRYPOINT"); validSurface.MatchString(s) {
+		return s
+	}
+	return "unknown"
 }
