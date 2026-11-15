@@ -18,7 +18,7 @@ The user does not need to learn CLI commands or provide Traceshield database,
 hosting or Google Cloud credentials.
 
 Setup (installing, connecting and reading this skill) ends after `status`
-confirms the connection: skip `tools list` until the user asks for app work.
+confirms the connection: skip `tools list` until the user asks for app work, which includes "how is my app doing?" or visitors (the `stats` tool).
 End the setup conversation with the welcome under **Finish clearly**. Keep it
 short: the welcome already says what is ready, so skip a step-by-step recap,
 and don't suggest continuing in this conversation (the plugin loads fully in a
