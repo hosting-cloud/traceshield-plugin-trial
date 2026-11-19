@@ -23,7 +23,7 @@ import (
 	"time"
 )
 
-const version = "0.3.9"
+const version = "0.3.11"
 const maxResponse = 4 << 20
 
 var validSurface = regexp.MustCompile(`^[a-z0-9._-]{1,32}$`)
@@ -240,7 +240,7 @@ func (c *client) waitDeployment(id string) (map[string]any, error) {
 	c.ctx = waitCtx
 	shown := ""
 	for {
-		result, err := c.call("deployment_status", map[string]any{"deployment_id": id})
+		result, err := c.call("deployment_status", map[string]any{"deployment_id": id, "ask": true})
 		if err != nil {
 			return nil, err
 		}

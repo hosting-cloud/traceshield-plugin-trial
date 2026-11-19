@@ -191,6 +191,9 @@ func (c *client) publish() (any, error) {
 		} else if c.firstPublish {
 			result["next_action"] = result["next_action"].(string) + `. Then reply with the bold LIVE lines, the live card's prompts, and at most 2 short sentences in total (what you checked; the private-repository note); skip test-data cleanup and tips`
 		}
+		if u, _ := deployment["feedback_url"].(string); u != "" {
+			result["feedback_url"] = u
+		}
 	} else {
 		result["next_action"] = "Read build/runtime logs, fix locally, commit and publish again; any earlier live version may still be serving"
 	}

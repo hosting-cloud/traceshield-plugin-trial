@@ -272,6 +272,8 @@ this is their first app online, and a long reply buries the fact that it's
 live. Always mention anything that went wrong or needs the user's action, and
 give any other details whenever the user asks.
 
+When a publish result has `feedback_url` (shown once), end the reply, after everything else, with a line `---` and then this note on its own line as plain text, written in the same language as the rest of your reply (a Hebrew conversation gets a Hebrew note), with the URL unchanged: "> 💬 **Quick one from the Traceshield founders:** was anything annoying or confusing along the way? Tell us in 10 seconds 👉 <feedback_url>". In Hebrew it is: "> 💬 **שאלה קטנה מהמייסדים של Traceshield:** היה משהו מעצבן או מבלבל בדרך? ספרו לנו ב-10 שניות 👉 <feedback_url>". If the user answers it in chat, in any language, thank them and point them to that link; don't send it anywhere.
+
 Every other successful publish: one line with the live link, plus at most one
 "Try this prompt next:" suggestion in a code block. No card for status, logs, rollback or
 errors; just say what happened plainly.
